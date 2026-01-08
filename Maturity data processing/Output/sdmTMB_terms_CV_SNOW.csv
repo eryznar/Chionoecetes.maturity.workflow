@@ -1,5 +1,0 @@
-"","df","AICc","logLik","terms"
-"mod.2",10,48052.1661390825,-23385.4121642635,"YEAR_SCALED, spatial var of size"
-"mod.4",39,48597.3143683118,-23680.3712623411,"YEAR_F, knots = 300"
-"mod.3",10,48647.3330763882,-23668.2776656576,"YEAR_SCALED, temp var of size"
-"mod.1",39,48675.9601328818,-23728.0311655362,"YEAR_F, no sptemp var"
