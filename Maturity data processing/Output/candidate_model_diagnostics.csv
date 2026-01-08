@@ -1,0 +1,6 @@
+"","MODEL","KNOTS","SIZE_BIN","TERMS","df","AIC","LOGLIK"
+"sdmTMB.mod.200","sdmTMB","200","5MM","s(SIZE_5MM, k = 4) + YEAR_F); spatiotemporal RF",39,48932.7456663267,-24427.3728331634
+"sdmTMB.mod.90.spvar","sdmTMB","90","5MM","s(SIZE_5MM, k = 4) + YEAR_F); spatiotemporal RF, spatially varying size effect",10,49362.326265083,-24671.1631325415
+"sdmTMB.mod.90","sdmTMB","90","5MM","s(SIZE_5MM, k = 4) + YEAR_F); spatiotemporal RF",39,49377.8907303893,-24649.9453651946
+"gam.mod","GAM","NA","5MM","s(SIZE_5MM) + s(YEAR) + ti(SIZE_5MM, YEAR) + s(LATITUDE, LONGITUDE)",48.3724190977261,53592.0395024723,-26747.6473321384
+"tinyVAST.mod","tinyVAST","90","10MM","s(SIZE_10MM, k = 4) + s(YEAR, k = 4); intersize correlations",19,56695.6560045904,-28328.8280022952

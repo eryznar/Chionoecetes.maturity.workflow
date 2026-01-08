@@ -1,0 +1,5 @@
+,df,AIC,pass_sanity,logLik,mesh_knots,terms
+mod.2,10,19195.7662,Y,-9261.058434,200,"s(SIZE), YEAR, spatial variation of size"
+mod.4,10,19228.73922,Y,-9287.835985,300,"s(SIZE), YEAR, spatial variation of size"
+mod.1,40,19387.91832,Y,-9364.992195,200,"s(SIZE), YEAR, no spatial variation of size"
+mod.3,40,19405.56122,Y,-9380.608496,300,"s(SIZE), YEAR, no spatial variation of size"

@@ -1,0 +1,344 @@
+---
+title: "Updated workflow for processing morphometric maturity data for Bering Sea *Chionoecetes* crab stocks"
+author: |
+  | Emily Ryznar
+  | NOAA Fisheries 
+  | emily.ryznar@noaa.gov 
+date: "`r format(Sys.time(), '%B %Y')`"
+output:
+  bookdown::pdf_document2:
+    fig_caption: true
+    includes: null
+    toc: no
+header-includes:
+   - \usepackage{caption}
+   - \newcommand{\blandscape}{\begin{landscape}}
+   - \newcommand{\elandscape}{\end{landscape}}
+   - \usepackage{pdflscape}
+
+---
+\pagenumbering{arabic}
+
+```{r global_options, include=FALSE, echo = FALSE, message = FALSE, warning=FALSE}
+library(knitr)
+opts_chunk$set(fig.width = 12, fig.height = 7, out.width  = "100%", out.height = "100%", fig.align = "center", echo = FALSE, warning = FALSE, message = FALSE,  dpi=300)
+
+```
+
+```{r, load_packages, echo = FALSE, include = FALSE}
+
+library(xtable)
+library(tidyverse)
+
+options(xtable.comment = FALSE)
+
+```
+# Introduction {-}
+Stock assessment authors require unbiased and precise estimates of population parameters to appropriately model marine populations. Parameters such as age-at-length and maturity-at-size usually cannot be measured directly and thus need to be estimated through various sampling designs, often via fisheries-independent surveys. In these surveys, age- or maturity compositions are defined as the proportion of a population belonging to a specific age or maturity class, which are usually estimated via a two-stage sampling design. In the first stage, species are randomly subsampled from a haul and measured for size ("subsample one"; e.g., length, carapace width, etc.). From this sized subsample, a further subsample is taken, from which more detailed biological data are collected such as otoliths for age estimation or chela height for crab morphometric maturity estimation (("subsample two"; Quinn and Deriso 1999). From there, subsample two data are usually aggregated into certain size bins and the proportion at age or proportion mature is calculated for each bin. For fish, this is usually achieved through a classic age-length-key (ALK; Fridriksson 1934) that describes the probability of being a specific age at a given length, which is then used to assign ages to individual fish in subsample one that have only been measured for length. Using this all of this information together with haul-level data, abundance and biomass at age and age compositions can then be calculated via design-based methods (Steward and Hamel 2014; Thorson and Haltuch 2019). 
+
+Traditional design- (via ALKs) or model-based approaches that map age or maturity subsamples onto size data generally ignore spatiotemporal variation in vital rates (Correa et al., 2020) and/or imprecision in estimates to due low and uneven sampling across space and time. This may be problematic as marine populations can exhibit spatiotemporal variation in vital metrics of interest, such as maturity in Bering Sea *Chioneocetes opilio* ("snow crab") and *Chionoecetes bairdi* ("Tanner crab") populations. *Chionoecetes* populations undergo a terminal molt upon reaching maturity, after which no further molting or growth occurs. The size at which this terminal molt is estimated to occur is a widely used indicator of biological fitness and an important management reference point (Mullowney and Baker, 2021), and it can vary across both space and time.
+For example, the size-at-maturity for snow crab in Newfoundland and Labrador was found to vary with temperature and the presence of large males in the population (Mullowney and Baker, 2021). Further, size-at-maturity for Bering Sea Tanner crab has been shown to vary in space (Somerton 1981), possibly reflecting influence from temperature (Hines 1989). In addition, there is evidence that size-at-maturity is declining over time in both Bering Sea *Chionoecetes* populations (Stockhausen, 2025; Zacher et al., 2025). Therefore, accurate, population-level estimates of *Chionoecetes* maturity are essential for effective management and for advancing biological understanding.
+
+Given this, our first goal was to evaluate the AFSC Shellfish Assessment Program's ("SAP") legacy workflow for processing *Chionoecetes* maturity data from the NMFS Eastern Bering Sea (EBS) bottom trawl survey. Our second goal was to update the workflow if necessary to account for potential spatiotemporal variation in maturity and uneven sampling to achieve unbiased and precise estimates. 
+
+
+# Methods {-}
+## Chela sampling on the NMFS bottom trawl survey {-}
+Chela data are taken via a two-stage sampling design from the NMFS bottom trawl survey. This process is similar to how otoliths are sampled from fish on the survey to estimate age-at-length. As such, we have modified the age-at-length equations from (Correa et al., 2020) for otolith samples collected on the bottom trawl survey for the purposes of illustrating how maturity-at-size can be estimated from crab chela measurements. In the first stage, crab are either fully sampled or subsampled from the haul and carapace widths (mm) are then measured from sampled crab. These measured crab, along with various other biological data, are what entail the "specimen data", or subsample one. In these data, to expand the number of crab in the specimen subsample to the haul catch, we calculate abundance-at-size \(\hat{c}_{s,i}\) (i.e., "sampling factor") following Equation \@ref(eq:abund-at-size)
+
+\begin{equation}
+(\#eq:abund-at-size)
+\hat{c}_{s,i} = \frac{\tilde{c}_{s,i}}{\lambda_i}
+\end{equation}
+
+where \(\tilde{c}_{s,i}\) is the number of crab measured at carapace width \(s\) in haul \(i\) divided by the subsampling intensity at size \(\lambda_i\). In the second stage, chela heights (mm) are taken from the left chela of male crab that were subsampled for the specimen data with the aim of measuring the chela heights of five crab within three carapace width size bins. These data entail the "chela data", or subsample two. While the aformentioned sampling strategy is the goal, chela sampling is variable across size bins and years (Figure \@ref(fig:nchela-heatmap)), as well as in space for snow crab (Figure \@ref(fig:snow-nchela-space)) and for Tanner crab (Figure \@ref(fig:tanner-nchela-space)). For snow crab, the chela time series extends from 1989-2025, with 2008, 2012, 2014, and 2016 omitted due to missing chela measurements. For Tanner crab, the chela time series extends from 1990-2025, with 2013 and 2015 omitted from both Tanner districts (east and west of 166°) and 2011 only omitted from the Tanner east district due to missing chela measurements. Data from 2020 are omitted from all maturity analyses because the survey was not conducted that year due to COVID‑19–related suspension of field operations.
+
+Using chela and specimen data, the goal is to estimate mature abundance at size. To do so, the first step is to calculate \(q_{s,m}\), the probability that a crab is mature, \(m\), at size \(s\). From there, we combine \(q_{s,m}\) with abundance-at-size \(\hat{c}_{s,i}\) to estimate mature abundance, \(\hat{c}_{m,i}\), following Equation \@ref(eq:matabund-at-size).
+
+\begin{equation}
+(\#eq:matabund-at-size)
+\sum_s \hat{c}_{s,i} q_{s,m} = \hat{c}_{m,i}
+\end{equation}
+
+The focus of this document is to achieve an unbiased and precise estimate of \(q_{s,m}\) for *Chionoecetes* crab in space and time that accounts for variability in sampling and maturity. All processing and analyses were conducted in R (R Core Team, 2025).
+
+## Legacy maturity data processing workflow {-}
+Once the NMFS bottom trawl survey is finished for the year, chela data are QA/QC’ed and processed following several steps (Figure \@ref(fig:mat-workflow)). First, the maturity cutline by species is established following (Richar and Foy, 2022) using only newshell crab from the chela data. Only newshell crab are used as they are most likely to have undergone terminal molt within the year (Mullowney and Baker, 2020). Therefore, unless otherwise noted, we limit our analysis and discussion to newshell males for the remainder of the document. The maturity cutline identifies crab as mature or immature using the linear relationship between ln(carapace width) and ln(chela height), where any carapace width X chela height point above the cutline is classified as mature and any point below is immature. This relationship is well-supported for both snow and Tanner crab (Figure \@ref(fig:cutlines)). Each species' cutline is then applied to the chela data to classify individual crab as mature (1) or immature (0). From here, the legacy workflow then uses \(\hat{c}_{s,i}\) to calculate the proportion of crab that are mature within 10mm bins. **This approach is incorrect as \(\hat{c}_{s,i}\) represents expanded estimates of crab due to subsampling in subsample one, not the second subsample for chela measurements** The legacy workflow then fits separate logistic models by year to proportion mature using the `nls()` function in R (R Core Team, 2025) to estimate \(q_{s,m}\) following Equation \@ref(eq:nls-equation)
+
+\begin{equation}
+(\#eq:nls-equation)
+q_{s,m} \sim \frac{1}{1 + e^{-\alpha (s - b)}}
+\end{equation}
+
+where \(s\) corresponds to each 10mm size bin, \(\alpha\) is the slope parameter, and \(b\) is the size at 50\% maturity (“SAM”), or the curve’s inflection point. These models are then used to predict \(q_{s,m}\) for all specimen data crab in subsample one and downstream outputs can be calculated.
+
+Maturity ogives are plotted by calculating the mean \(q_{s,m}\) for each year and size bin across hauls. SAM, or the \(q_{s,m}\) at which 50\% of the population is predicted to have undergone terminal molt, is estimated as the \(b\) parameter with associated error each year. However, while ogives and SAM are assumed to be population-level metrics, the legacy workflow does not account for population size when calculating either.
+
+Mature station-level biomass and abundance, or \(\hat{c}_{m,i}\), is calculated following Equation \@ref(eq:matabund-at-size) above by multiplying the predicted probability mature at size, \(q_{s,m}\), by the \(\hat{c}_{s,i}\) abundance/biomass at size for each station \(i\). Mature CPUE and population-level biomass and abundance are then calculated using design-based expansion methods as outlined in Zacher et al. (2025). The legacy workflow treats \(q_{s,m}\) as fixed, neither propagating its estimation uncertainty into mature biomass and abundance calculations nor allowing for potential spatiotemporal variation in \(q_{s,m}\).
+
+## Proposed maturity data processing workflow {-}
+The proposed processing workflow follows the same steps as above for establishing and applying maturity cutlines to identify chela crab as mature or immature. However, after this point, the proposed workflow enacts several changes compared to the legacy which are summarized in Table \@ref(tab:workflow-comparison).
+
+The proposed workflow uses *sdmTMB* (Anderson et al., 2022) to build spatiotemporal models to estimate \(q_{s,m}\). *sdmTMB* provides a flexible framework for estimating crab maturity because it explicitly models spatial and spatiotemporal structure, rather than treating observations as independent in space and time. Spatial random fields allow nearby locations to be correlated, so maturity estimates at one station are informed by data from neighboring stations, even when sampling density varies across the survey domain. Spatiotemporal random fields capture patterns that evolve through time but remain spatially correlated, enabling the model to “borrow strength” from nearby locations and adjacent years (depending on the specified correlation structure) when data are sparse or missing in particular space–time cells. *sdmTMB* also allows GAM-style smooths for size, which can produce maturity ogives that are not constrained to a logistic shape. Therefore, use of *sdmTMB* can facilitate robust prediction and smoothing across under-sampled space–time–size combinations, with uncertainty estimates that reflect local data density. In practice, dense regions and years drive more precise maturity predictions, while sparser regions are stabilized by the specified spatial and temporal correlation structure (Anderson et al., 2022).
+
+We fit binomial *sdmTMB* models to mature/immature crab (1/0) by 5mm carapace width bins. The general formula for the maturity *sdmTMB* model follows Equation \@ref(eq:mat-sdmTMB)
+
+\begin{equation}
+\begin{aligned}
+Y_i &\sim \text{Bernoulli}(p_i) \\
+\text{logit}(p_i) &= f(s_i) + \beta_{t_i} + \omega(x_i) + \varepsilon_{t_i}(x_i)
+\end{aligned}
+(\#eq:mat-sdmTMB)
+\end{equation}
+
+where \(Y_i\) is the maturity status for crab \(i\), \(s_i\) is its size with smooth function \(f()\), \(\beta_{t_i}\) is a fixed effect of year, \(\omega(x_i)\) is the spatial Gaussian random field and \(\varepsilon_{t_i}(x_i)\) is the spatiotemporal Gaussian random field with independent increments over time (“iid”). For both snow crab and Tanner crab, we specified the spatial random field to exhibit anisotropic covariance. Other decision points included the resolution of the spatial mesh used in fitting the model, the number of knots in the smooth function for size, and whether the effect of size could change over space (modified via the `spatial_varying` argument) or time (modified via the `time_varying` argument). We fit models with these different decision points in mind and compared each model’s performance using *sdmTMB*’s `sanity()` function, AIC, log-likelihood via cross-validation, and DHARMa residuals by year, by size, and in space. Any model that did not initially pass *sdmTMB*'s `sanity()` check was omitted from further evaluation. We also evaluated fitting simpler spatial GAM models and fitting models separately by year, but sdmTMB models outperformed spatial GAMs and models separate by year did not pass `sanity()` checks. Therefore, we did not pursue these approaches any further. For Tanner crab, there were not enough maturity data to fit separate *sdmTMB* models by Tanner crab east and west of 166°. However, we do plot separate ogives, SAM time series, and mature biomass/abundance time series by these districts. 
+
+The best model for each species is then used to predict \(q_{s,m}\) for all measured specimen crab in subsample one. Maturity ogives are plotted by calculating the mean \(q_{s,m}\) for each year and size bin across hauls weighted by \(\hat{c}_{s,i}\) to account for population size. SAM is also estimated each year by calculating the size at which \(q_{s,m}\), weighted by \(\hat{c}_{s,i}\), first intersects 50\%.
+
+Mature station-level biomass and abundance, or \(\hat{c}_{m,i}\), is calculated following Equation \@ref(eq:matabund-at-size) above by multiplying the predicted probability mature at size, \(q_{s,m}\), by the \(\hat{c}_{s,i}\) abundance/biomass at size for each station \(i\). Associated uncertainty in \(\hat{c}_{m,i}\) estimation was propagated in a two-step Monte Carlo procedure. First, 500 predictive simulations were drawn from the fitted spatial maturity model, and each simulated maturity proportion was propagated through standard design-based expansion methods to obtain 500 biomass and abundance estimates per stratum. Second, for each of these estimates, additional survey uncertainty was incorporated by drawing 1,000 values from a normal distribution with mean equal to the design-based estimate and standard deviation equal to the reported 95\% confidence interval divided by 1.96. This procedure jointly propagates model predictive uncertainty and survey sampling uncertainty into the final mature biomass and abundance estimates.
+
+Finally, maturity ogives, SAM, and mature biomass and abundance generated from the best *sdmTMB* model for each species were compared with the legacy workflow output. Since the legacy workflow uses 10mm bins, we interpolated 10mm ogives to 5mm bins using *mgcv*'s `gam()` function (Wood, 2011) for comparison with *sdmTMB* 5mm ogives. 
+
+# Results/Discussion {-}
+## Snow crab {-}
+For snow crab, the best *sdmTMB* model in terms of AIC and cross validation was a model using 13 knots in the smooth function for size (Table \@ref(tab:snow-kcomparison)), a 300-knot spatial mesh (Figure \@ref(fig:snow-mesh-300)), and a spatially-varying effect of size (Table \@ref(tab:snow-parcomparison)). This model passed *sdmTMB*'s `sanity()` check, had the lowest AIC, and the largest log-likelihood. QQ-plots of DHARMa residuals for this model did not demonstrate any strong deviations when evaluated by year (Figure \@ref(fig:snow-QQ-yr)) or by size (Figure \@ref(fig:snow-QQ-size)), though there was some evidence of deviation in the smallest and largest size bins likely due to full separation in maturity status and limited data. Spatial plots of DHARMa residuals did not exhibit evidence of spatiotemporal autocorrelation when examined by year (Figure \@ref(fig:snow-spatialDHARMa-yr)) or by size (Figure \@ref(fig:snow-spatialDHARMa-size)).
+
+Maturity ogives from the legacy (interpolated to 5mm bins) and sdmTMB workflows differ (Figure \@ref(fig:snow-ogives)), primarily because of contrasting assumptions about ogive shape in the model structures and how sparse data are treated. This, together with differing approaches to calculating SAM, leads to systematic differences in SAM by year, with sdmTMB-based SAM generally exceeding that from the legacy workflow (Figure \@ref(fig:snow-SAM)).
+
+
+Despite these differences, mature biomass and abundance were highly aligned between legacy and sdmTMB workflows (Figure \@ref(fig:snow-bioabund)). The largest differences were earlier in the time series, in 2011, and in 2018, but the CIs still overlapped between the two workflows. While the two workflows may result in different ogives and SAMs by year, these differences are not propagated to mature biomass and abundance since these estimates are aggregated across sizes. 
+
+## Tanner crab {-}
+For Tanner crab, the best *sdmTMB* model in terms of AIC and cross validation was a model using 10 knots in the smooth function for size (Table \@ref(tab:tanner-kcomparison)), a 200-knot spatial mesh (Figure \@ref(fig:tanner-mesh-200)), and a spatially-varying effect of size (Table \@ref(tab:tanner-parcomparison)). This model passed *sdmTMB*'s `sanity()` check, had the lowest AIC, and the largest log-likelihood. QQ-plots of DHARMa residuals for this model generally did not demonstrate any strong deviations when evaluated by year (Figure \@ref(fig:tanner-QQ-yr)) except for 2011, which had limited chela data. As with snow crab, QQ-plots of DHARMa residuals by size exhibited some evidence of deviation in the smallest and largest size bins likely due to full separation in maturity status and limited data for these bins, but were otherwise well-behaved (Figure \@ref(fig:tanner-QQ-size)). Spatial plots of DHARMa residuals did not exhibit evidence of spatiotemporal autocorrelation when examined by year (Figure \@ref(fig:tanner-spatialDHARMa-yr)) or by size (Figure \@ref(fig:tanner-spatialDHARMa-size)).
+
+Ogives were generally similar between legacy (interpolated to 5mm bins) and *sdmTMB* workflows for Tanner crab east of 166° (Figure \@ref(fig:tannerE-ogives)) and west of 166° (Figure \@ref(fig:tannerW-ogives)). This could be due to less Tanner crab maturing at smaller sizes which drives the hump-shaped ogives observed for snow crab, resulting in a more logistic-shaped ogives that aligns with the legacy workflow. Despite similarities in ogive shape between the two workflows, SAM values still differed for both east and west districts (Figure \@ref(fig:tanner-SAM)). The largest differences in SAM correspond to years where the ogives exhibited the greatest difference in shape between the workflows, such as in 2006 for each Tanner east and 1990 for Tanner west. However, SAM estimations are generally aligned across workflows and districts.
+
+As with snow crab, mature biomass and abundance were highly similar between legacy and sdmTMB workflows for Tanner crab east of 166°(Figure \@ref(fig:tannerE-bioabund)) and west of 166° (Figure \@ref(fig:tannerW-bioabund)). The largest differences were earlier in the time series and from 2005-2010. However, the CIs overlapped across the time series between the two workflows. 
+
+# Conclusion {-}
+Accounting for potential spatiotemporal variation and various forms of uncertainty in vital metrics such as *Chionoecetes* maturity is essential for informing stock biology and for accurate inputs in stock assessments. Here, we argue that the updated AFSC SAP *Chionoecetes* maturity data processing workflow provides several distinct advantages relative to the legacy workflow. First, the updated workflow eliminates the use of sampling factor to model maturity in subsample two, thereby correcting the inappropriate commingling of subsample one and two that occurred in the legacy workflow. Second, by switching to *sdmTMB* spatiotemporal models, the updated workflow accounts for spatiotemporal variation in maturity, robustly handles data gaps due to uneven sampling, and facilitates future spatiotemporal maturity research. Third, the updated workflow explicitly incorporates uncertainty from model maturity estimates in downstream outputs. Finally, by flexibly modeling maturity-at-size relationships with strong diagnostics, the updated workflow strengthens confidence that observed non-logistic ogives reflect biological signal rather than process artifacts. In conclusion, we argue that the advantages of the updated workflow yield more precise and unbiased maturity estimates compared to the legacy workflow. 
+
+# Data and code availability {-}
+Maturity data and processing code are available on on the Chionoecetes.maturity.workflow Github repository (https://github.com/eryznar/Chionoecetes.maturity.workflow).
+
+# References {-}
+Anderson, S.C., Ward, E.J., English, P.A., Barnett, L.A.K., Thorson, J.T. 2024. sdmTMB: an R package for fast, flexible, and user-friendly generalized linear mixed effects models with spatial and spatiotemporal random fields. bioRxiv 2022.03.24.485545. doi:10.1101/2022.03.24.485545
+ 
+Correa, G.M., Ciannelli, L., Barnett, L.A.K., Punt, A.E., & Thorson, J.T. 2020. Improved estimation of age composition by accounting for spatiotemporal variability in somatic growth.  Can. J. Fish. Aquat. Sci. 78(12), 1828–1844. doi:10.1139/cjfas-2020-0166 
+
+Fridriksson, A. 1934. On the calculation of age distribution within a stock of cod by means of relatively few age-determinations as a key to measurements on a large scale. Rapp. Proces-Verbaux Reun. Cons. Int. Pour Explor. Mer. 86: 1–14.
+
+Mullowney, D.R.J., and Baker, K.D. 2020. Size-at-maturity shift in a male-only fishery: factors affecting molt-type outcomes in Newfoundland and Labrador snow crab (*Chionecetes opilio*). ICES J. Mar. Sci 78: 515-533.
+
+Quinn, T.J., II, and Deriso, R.B. 1999. Quantitative fish dynamics. New York, NY: Oxford University Press.
+
+R Core Team. 2025. R: A Language and Environment for Statistical Computing. R Foundation for Statistical Computing, Vienna, Austria. https://www.R-project.org/.
+
+Richar, J.I., & Foy, R.J. 2022. A novel morphometry-based method for assessing maturity in male Tanner crab, Chionoecetes bairdi. FACETS 7(1): 1598–1616. doi:10.1139/facets-2021-0061
+
+Stewart, I.J., and Hamel, O.S. 2014. Bootstrapping of sample sizes for length- or age-composition data used in stock assessments. Can. J. Fish. Aquat. Sci. 71: 581–588. doi:10.1139/cjfas-2013-0289.
+
+Stockhausen, W. 2025. C3 Tanner Crab SAFE: Stock assessment and fishery evaluation report for Tanner crab in the Bering Sea and Aleutian Islands. North Pacific Fishery Management Council, Anchorage, AK.
+
+Thorson, J.T., and Haltuch, M.A. 2019. Spatiotemporal analysis of compositional data: increased precision and improved workflow using model-based inputs to stock assessment. Can. J. Fish. Aquat. Sci. 76: 401–414. doi:10.1139/cjfas2018-0015.
+
+Wood, S.N. 2011. Fast stable restricted maximum likelihood and marginal likelihood estimation of semiparametric
+generalized linear models. Journal of the Royal Statistical Society (B) 73(1):3-36
+
+Zacher, L.S., Hennessey, S.M., Richar, J.I., Fedewa, E.J., Ryznar, E.R., & Litzow, M.A. 2025. The 2024 eastern Bering Sea continental shelf trawl survey: Results for commercial crab species. U.S. Department of Commerce, NOAA Technical Memorandum NMFS‑AFSC‑499, 228 p.
+
+
+# Tables {-}
+```{r workflow-comparison, echo=FALSE}
+library(kableExtra)
+
+tab <- data.frame(
+  `Legacy workflow` = c(
+    "Uses 10mm bins",
+    "Fits nls logistic models to chela data",
+    "Uses proportion mature as the response, calculated using sampling factor",
+    "Does not account for uncertainty in maturity due to uneven sampling across space, time, and size bins",
+    "Models not vetted through diagnostics(?)",
+    "SAM and ogives do not account for population size"
+  ),
+  `Proposed workflow` = c(
+    "Uses 5mm bins",
+    "Fits sdmTMB models to chela data",
+    "Uses binomial (mature/immature) as response",
+    "Robust to spatiotemporal gaps and variability in maturity through random fields; uncertainty is also tied to sample sizes via binomial structure and propagated across all workflow steps",
+    "Models vetted through diagnostics",
+    "SAM and ogives are weighted by abundance to account for population size"
+  ),
+  check.names = FALSE
+)
+
+kable(tab, "latex", booktabs = TRUE,
+      caption = "Comparison of legacy and proposed workflows.") %>%
+  kable_styling(full_width = FALSE, latex_options = "H") %>%     # keeps within margins
+  column_spec(1, width = "6cm") %>%         # set widths so text wraps
+  column_spec(2, width = "7cm") 
+```
+
+```{r snow-kcomparison, echo=FALSE}
+library(kableExtra)
+
+tab <- read.csv("sdmTMB_ksmooth_CV_SNOW.csv", check.names = FALSE,
+                stringsAsFactors = FALSE)
+
+kable(tab, "latex", booktabs = TRUE,
+      caption = "Evaluation of snow crab sdmTMB models using different knots in the smooth function for size while holding other variables constant.") %>%
+  kable_styling(full_width = FALSE, latex_options = "H") 
+```
+
+```{r snow-parcomparison, echo=FALSE}
+library(kableExtra)
+
+tab <- read.csv("sdmTMB_terms_CV_SNOW.csv", check.names = FALSE,
+                stringsAsFactors = FALSE)
+
+kable(tab, "latex", booktabs = TRUE,
+      caption = "Evaluation of snow crab sdmTMB models using different model parameterizations and knots in the model mesh.") %>%
+  kable_styling(full_width = FALSE, latex_options = "H")
+```
+
+```{r tanner-kcomparison, echo=FALSE}
+library(kableExtra)
+
+tab <- read.csv("sdmTMB_ksmooth_CV_TANNER.csv", check.names = FALSE,
+                stringsAsFactors = FALSE)
+
+kable(tab, "latex", booktabs = TRUE,
+      caption = "Evaluation of Tanner crab sdmTMB models using different knots in the smooth function for size while holding other variables constant.") %>%
+  kable_styling(full_width = FALSE, latex_options = "H")
+```
+
+```{r tanner-parcomparison, echo=FALSE}
+library(kableExtra)
+
+tab <- read.csv("sdmTMB_terms_CV_TANNER.csv", check.names = FALSE,
+                stringsAsFactors = FALSE)
+
+kable(tab, "latex", booktabs = TRUE,
+      caption = "Evaluation of Tanner crab sdmTMB models using different model parameterizations and knots in the model mesh.") %>%
+  kable_styling(full_width = FALSE, latex_options = "H")
+```
+
+# Figures {-}
+```{r nchela-heatmap, fig.align = "center", fig.cap = "Number of chela measurements by 5mm carapace width bins and year for snow crab (top panel) and Tanner crab (bottom panel)."}
+
+knitr::include_graphics("nchela_heatmap.png")
+```
+
+```{r snow-nchela-space, fig.align = "center", fig.cap = "Proportion mature by station and year for sampled chela snow crab."}
+
+knitr::include_graphics("snow_spatial_pmat.png")
+```
+
+```{r tanner-nchela-space, fig.align = "center", fig.cap = "Proportion mature by station and year for sampled chela Tanner crab."}
+
+knitr::include_graphics("tanner_spatial_pmat.png")
+```
+
+\begin{landscape}
+```{r mat-workflow, fig.align = "center", fig.cap = "Schematic for the chela data processing workflow."}
+
+knitr::include_graphics("mat_workflow.png")
+```
+\end{landscape}
+
+```{r cutlines, fig.align = "center", fig.cap = "Maturity cutlines for snow (top panel) and Tanner crab (bottom panel) established following Richar and Foy (2022). "}
+
+knitr::include_graphics("cutline.png")
+```
+
+```{r snow-mesh-300, fig.align = "center", fig.cap = "Snow crab sdmTMB spatial mesh using 300 knots. Red points designate mesh vertices and black dots are observations from the chela data."}
+
+knitr::include_graphics("snow_mesh_300k.png")
+```
+
+```{r snow-QQ-yr, fig.align = "center", fig.cap = "QQ plot of DHARMa residuals for the best snow crab sdmTMB model by year."}
+
+knitr::include_graphics("snow_QQ_year.png")
+```
+
+```{r snow-QQ-size, fig.align = "center", fig.cap = "QQ plot of DHARMa residuals for the best snow crab sdmTMB model by size."}
+
+knitr::include_graphics("snow_QQ_size.png")
+```
+
+```{r snow-spatialDHARMa-yr, fig.align = "center", fig.cap = "Spatial plot of DHARMa residuals for the best snow crab sdmTMB model by year."}
+
+knitr::include_graphics("snow_spatialDHARMa_year.png")
+```
+
+```{r snow-spatialDHARMa-size, fig.align = "center", fig.cap = "Spatial plot of DHARMa residuals for the best snow crab sdmTMB model by size."}
+
+knitr::include_graphics("snow_spatialDHARMa_size.png")
+```
+
+```{r snow-ogives, fig.align = "center", fig.cap = "Snow crab maturity ogives predicted by the legacy workflow (tan) and proposed workflow using sdmTMB (green). Original 10mm bin legacy ogives have been interpolated to 5mm bins for comparison. X-axis rugs denote data extent."}
+
+knitr::include_graphics("snow_ogive_comparison_legacy.sdmTMB.png")
+```
+
+```{r snow-SAM, fig.align = "center", fig.cap = "Snow crab size-at-50%-maturity (SAM; mm) predicted by the legacy workflow (tan) and proposed workflow using sdmTMB (green)."}
+
+knitr::include_graphics("snow_SAM_comparison.png")
+```
+
+
+```{r snow-bioabund, fig.align = "center", fig.cap = "Mature snow crab abundance (millions; top panel) and biomass (metric tons; bottom panel) predicted by the legacy workflow (tan) and proposed workflow using sdmTMB (green)."}
+
+knitr::include_graphics("snow_bioabund_comparison_legacy.sdmTMB.png")
+```
+
+```{r tanner-mesh-200, fig.align = "center", fig.cap = "Tanner crab sdmTMB spatial mesh using 200 knots. Red points designate mesh vertices and black dots are observations from the chela data."}
+
+knitr::include_graphics("tanner_mesh_200k.png")
+```
+
+```{r tanner-QQ-yr, fig.align = "center", fig.cap = "QQ plot of DHARMa residuals for the best Tanner crab sdmTMB model by year."}
+
+knitr::include_graphics("tanner_QQ_year.png")
+```
+
+```{r tanner-QQ-size, fig.align = "center", fig.cap = "QQ plot of DHARMa residuals for the best Tanner crab sdmTMB model by size."}
+
+knitr::include_graphics("tanner_QQ_size.png")
+```
+
+```{r tanner-spatialDHARMa-yr, fig.align = "center", fig.cap = "Spatial plot of DHARMa residuals for the best Tanner crab sdmTMB model by year."}
+
+knitr::include_graphics("tanner_spatialDHARMa_year.png")
+```
+
+```{r tanner-spatialDHARMa-size, fig.align = "center", fig.cap = "Spatial plot of DHARMa residuals for the best Tanner crab sdmTMB model by size."}
+
+knitr::include_graphics("tanner_spatialDHARMa_size.png")
+```
+
+```{r tannerE-ogives, fig.align = "center", fig.cap = "Tanner crab east of 166° maturity ogives predicted by the legacy workflow (tan) and proposed workflow using sdmTMB (green). Original 10mm bin legacy ogives have been interpolated to 5mm bins for comparison. X-axis rugs denote data extent."}
+
+knitr::include_graphics("tannerE166_ogive_comparison_legacy.sdmTMB.png")
+```
+
+```{r tannerW-ogives, fig.align = "center", fig.cap = "Tanner crab west of 166° maturity ogives predicted by the legacy workflow (tan) and proposed workflow using sdmTMB (green). Original 10mm bin legacy ogives have been interpolated to 5mm bins for comparison. X-axis rugs denote data extent."}
+
+knitr::include_graphics("tannerW166_ogive_comparison_legacy.sdmTMB.png")
+```
+
+```{r tanner-SAM, fig.align = "center", fig.cap = "Tanner crab size-at-50%-maturity (SAM; mm) predicted by the legacy workflow (tan) and proposed workflow using sdmTMB (green) for Tanner crab east of 166° (top panel) and Tanner crab west of 166° (bottom panel). "}
+
+knitr::include_graphics("tanner_SAM_comparison.png")
+```
+
+
+```{r tannerE-bioabund, fig.align = "center", fig.cap = "Mature Tanner crab abundance (millions; top panel) and biomass (metric tons; bottom panel) predicted by the legacy workflow (tan) and proposed workflow using sdmTMB (green) for Tanner crab east of 166°."}
+
+knitr::include_graphics("tannerE_bioabund_comparison_legacy.sdmTMB.png")
+```
+
+```{r tannerW-bioabund, fig.align = "center", fig.cap = "Mature Tanner crab abundance (millions; top panel) and biomass (metric tons; bottom panel) predicted by the legacy workflow (tan) and proposed workflow using sdmTMB (green) for Tanner crab west of 166°."}
+
+knitr::include_graphics("tannerW_bioabund_comparison_legacy.sdmTMB.png")
+```
