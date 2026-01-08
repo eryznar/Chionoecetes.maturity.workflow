@@ -5,7 +5,7 @@
 # NOTES:
 
 # LOAD LIBS/PARAMS ---------------------------------------------------------------------------------------
-source("./Maturity data processing/Scripts/1) load_libs_params.R")
+source("./Maturity data processing/Scripts/load_libs_params.R")
 
 # SNOW ----
 # Load minima data, calculate cutline params
@@ -72,7 +72,7 @@ snow_chela <-  read.csv("./Maturity data processing/Data/snow_tanner_cheladataba
 
 length(unique(snow_chela$SIZE_CATEGORY))
 
-ggplot(snow_chela %>% dplyr::filter(YEAR != 2012), aes(YEAR, SIZE_5MM, fill = N_chela_5mm))+
+ggplot(snow_chela, aes(YEAR, SIZE_5MM, fill = N_chela_5mm))+
   geom_tile()+
   theme_bw()+
   ggtitle("Snow")+
@@ -100,7 +100,7 @@ spat.dat <- snow_chela %>%
                       PROP_MATURE = MATURE/N) 
               
 ggplot()+
-  geom_point(spat.dat %>% dplyr::filter(YEAR != 2012), mapping = aes(LONGITUDE, LATITUDE, fill = PROP_MATURE), stroke = NA, pch=21, color = "black", size = 1.5)+
+  geom_point(spat.dat, mapping = aes(LONGITUDE, LATITUDE, fill = PROP_MATURE), stroke = NA, pch=21, color = "black", size = 1.5)+
   facet_wrap(~YEAR)+
   theme_bw()+
   #ggtitle("Snow")+

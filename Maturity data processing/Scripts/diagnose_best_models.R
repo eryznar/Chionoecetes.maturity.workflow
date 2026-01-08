@@ -1,5 +1,5 @@
 # LOAD LIBS/PARAMS ---------------------------------------------------------------------------------------
-source("./Maturity data processing/Scripts/1) load_libs_params.R")
+source("./Maturity data processing/Scripts/load_libs_params.R")
 
 # SNOW DATA ----
 # Load minima data, calculate cutline params
@@ -319,52 +319,4 @@ tanner_novar <- readRDS(paste0(remote_dir, "TANNER/sdmTMB/sdmTMB_nospVAR.rda"))
 
 plot.resids(tanner_novar, "Tanner", "sdmTMB_novar_k200") -> out.novar.t
 
-
-rT_yr <- rbind(out.spvar.t$rr_yr %>% dplyr::select(!fold), out.spvar300.t$rr_yr, out.novar.t$rr_yr)
-rT_size <- rbind(out.spvar.t$rr_size %>% dplyr::select(!fold), out.spvar300.t$rr_size, out.novar.t$rr_size)
-
-#  QQ plot with ggplot2
-ggplot()+
-  theme_bw()+
-  #geom_point(rT_yr, mapping = aes(expected, observed,color = model), size = 1.5, alpha = 0.15, stroke = NA)+ #theoretical uniform quantiles vs. empirical residual quantiles
-  geom_line(rT_yr, mapping = aes(expected, observed,color = model), linewidth = 1, alpha = 0.75)+ #theoretical uniform quantiles vs. empirical residual quantiles
-  geom_abline(slope = 1, intercept = 0, color = "black", linewidth = 1, linetype = "dashed")+
-  ylab("observed")+
-  xlab("expected")+
-  facet_wrap(~YEAR)+
-  scale_x_continuous(breaks = c(0, 0.5, 1))+
-  scale_y_continuous(breaks = c(0, 0.5, 1))+
-  theme(axis.text = element_text(size = 12),
-        axis.title = element_text(size = 12),
-        strip.text = element_text(size = 12))+
-  theme(axis.text = element_text(size = 12),
-        axis.title = element_text(size = 12),
-        strip.text = element_text(size = 12),
-        legend.title = element_blank(),
-        legend.position = "bottom",
-        legend.direction = "horizontal")+
-  ggtitle("Tanner DHARMa by year")
-
-
-ggsave("./Maturity data processing/Figures/tanner_DHARMAbyYEAR.png", width = 10, height = 10)
-
-ggplot()+
-  theme_bw()+
-  #geom_point(rT_yr, mapping = aes(expected, observed,color = model), size = 1.5, alpha = 0.15, stroke = NA)+ #theoretical uniform quantiles vs. empirical residual quantiles
-  geom_line(rT_size, mapping = aes(expected, observed,color = model), linewidth = 1, alpha = 0.75)+ #theoretical uniform quantiles vs. empirical residual quantiles
-  geom_abline(slope = 1, intercept = 0, color = "black", linewidth = 1, linetype = "dashed")+
-  ylab("observed")+
-  xlab("expected")+
-  facet_wrap(~SIZE_5MM)+
-  scale_x_continuous(breaks = c(0, 0.5, 1))+
-  scale_y_continuous(breaks = c(0, 0.5, 1))+
-  theme(axis.text = element_text(size = 12),
-        axis.title = element_text(size = 12),
-        strip.text = element_text(size = 12),
-        legend.title = element_blank(),
-        legend.position = "bottom",
-        legend.direction = "horizontal")+
-  ggtitle("Tanner DHARMa by size")
-
-ggsave("./Maturity data processing/Figures/tanner_DHARMAbySIZE.png", width = 10, height = 10)
 

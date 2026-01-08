@@ -4,7 +4,7 @@
 # Author: Emily Ryznar, Jon Richar, Shannon Hennessey
 
 # LOAD LIBS/PARAMS/DATA ----
-source("./Maturity data processing/Scripts/1) load_libs_params.R")
+source("./Maturity data processing/Scripts/load_libs_params.R")
 
 #  BIN DATA ----
 read.csv("./Maturity data processing/Data/snow_tanner_cheladatabase.csv") %>% 

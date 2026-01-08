@@ -6,11 +6,10 @@
 
 
 # LOAD LIBS/PARAMS ---------------------------------------------------------------------------------------
-source("./Maturity data processing/Scripts/1) load_libs_params.R")
+source("./Maturity data processing/Scripts/load_libs_params.R")
 
 # TANNER ---------------------------------------------------------------------------------------------------
  # Load sdmTMB models ----
- #tanner_mod <- readRDS(paste0(remote_dir, "TANNER/sdmTMB/sdmTMB_nospVAR.rda"))
  tanner_mod <- readRDS("./Maturity data processing/Doc/Tanner models/sdmTMB_spVAR_SIZE_k200.rda")
    
  # Load specimen data ----
@@ -57,7 +56,6 @@ source("./Maturity data processing/Scripts/1) load_libs_params.R")
    st_transform(., crs = "+proj=utm +zone=2") %>%
    cbind(st_coordinates(.)) %>%
    as.data.frame(.) %>%
-   #filter(N_chela > 40) %>% #necessary for consecutive size correlations to run
    mutate(LATITUDE = Y/1000, # scale to km so values don't get too large
           LONGITUDE = X/1000,
           SIZE_CATEGORY = as.factor(paste0("SIZE", SIZE_BINNED)),
@@ -73,9 +71,7 @@ source("./Maturity data processing/Scripts/1) load_libs_params.R")
  # Calculate biomass and abundance ----
  # Legacy
  tanner_legacy_spec <- tanner_dat
- #tanner_legacy_ogives <- read.csv("./Maturity data processing/Data/tanner_legacy_ogives.csv") %>%
-   #dplyr::filter(DISTRICT != "ALL")
- 
+
  tanner_pars <- read.csv("./Maturity data processing/Data/tanner_legacy_modelpars.csv") 
  
  tanner_legacy_spec$specimen <-  tanner_legacy_spec$specimen %>% 
@@ -431,146 +427,7 @@ tanner_results_df <-
  ggsave("./Maturity data processing/Doc/tannerE166_ogive_comparison_legacy.sdmTMB.png", width  = 10, height = 11, units = "in")
  
  
- 
- 
- # ggplot(ogive.dat %>% filter(Estimator != "Legacy"), aes(SIZE, PROP_MATURE, color = Estimator))+
- #   geom_line(linewidth = 1)+
- #   scale_color_manual(values = c(
- #     "sdmTMB"       = "cadetblue",
- #     "Binomial GAM" = "salmon"), name = "")+
- #   scale_fill_manual(values = c(
- #     "sdmTMB"       = "cadetblue",
- #     "Binomial GAM" = "salmon"
- #   ), name = "")+
- #   facet_wrap(~YEAR)+
- #   xlim(c(25, 137.5))+
- #   geom_hline(yintercept = 0.5, linetype = "dashed")+
- #   theme_bw()+
- #   #scale_x_continuous(breaks = seq(0, 175, by = 10))+
- #   ylab("Proportion mature")+
- #   xlab("Carapace width (mm)")+
- #   theme(legend.position = "bottom", legend.direction = "horizontal",
- #         legend.text = element_text(size = 12),
- #         axis.title = element_text(size = 12))
- # 
- # ggsave("./Maturity data processing/Doc/snow_ogive_comparison_sdmTMB.GAM.png", width  = 10, height = 7, units = "in")
- # 
- # 
- # Calculate mature crab at industry-preferred size ----
- # # Legacy
- # legacy.indpref <- crabpack::calc_bioabund(crab_data = legacy.spec, species = "SNOW", years = years, 
- #                                           size_min = 101, size_max = NULL,  sex = "male", 
- #                                           shell_condition = "new hardshell") %>%
- #                   right_join(., data.frame(YEAR = seq(min(.$YEAR), max(.$YEAR)))) %>%
- #                   mutate(Estimator = "Legacy",
- #                          ABUNDANCE = ABUNDANCE/1e6,
- #                          ABUNDANCE_CI = ABUNDANCE_CI/1e6) %>%
- #                   dplyr::select(SPECIES, YEAR, ABUNDANCE, BIOMASS_MT, Estimator) %>%
- #                   rename(ABUNDANCE_INDPREF = ABUNDANCE,
- #                          BIOMASS_MT_INDPREF = BIOMASS_MT)
- # # sdmTMB
- # sdmTMB.indpref <- crabpack::calc_bioabund(crab_data = sdmTMB.spec, species = "SNOW", years = years, 
- #                                           size_min = 101, size_max = NULL,  sex = "male", 
- #                                           shell_condition = "new hardshell") %>%
- #                     right_join(., data.frame(YEAR = seq(min(.$YEAR), max(.$YEAR)))) %>%
- #                     mutate(Estimator = "sdmTMB",
- #                            ABUNDANCE = ABUNDANCE/1e6,
- #                            ABUNDANCE_CI = ABUNDANCE_CI/1e6) %>%
- #                     dplyr::select(SPECIES, YEAR, ABUNDANCE, BIOMASS_MT, Estimator) %>%
- #                     rename(ABUNDANCE_INDPREF = ABUNDANCE,
- #                            BIOMASS_MT_INDPREF = BIOMASS_MT)
- # 
- # # Bind and join with bioabund dat
- # indpref.dat <- rbind(legacy.indpref, sdmTMB.indpref) %>%
- #                 right_join(., bioabund.dat) %>%
- #                 mutate(PROP_MAT.INDPREF = ABUNDANCE_INDPREF/ABUNDANCE) 
- # 
- # # Plot
- # ggplot(indpref.dat, aes(YEAR, PROP_MAT.INDPREF))+
- #   geom_line(mapping = aes(color = Estimator), linewidth = 1)+
- #   geom_point(mapping = aes(color = Estimator), size = 1.5)+
- #   scale_color_manual(values= c("darkgoldenrod", "cadetblue"), name = "")+
- #   scale_fill_manual(values= c("darkgoldenrod", "cadetblue"), name = "")+
- #   #geom_smooth(mapping = aes(color = Estimator, fill = Estimator), alpha = 0.15, method = "lm")+
- #   theme_bw()+
- #   ylab("Proportion mature industry-preferred")+
- #   xlab("Year")+
- #   theme(legend.position = "bottom", legend.direction = "horizontal",
- #         legend.text = element_text(size = 12),
- #         axis.title = element_text(size = 12))
- # 
- # ggsave("./Maturity data processing/Doc/snow_prop_matindpref_comparison_legacy.sdmTMB.png", width  = 7, height = 5, units = "in")
- 
- # Spatial proportion mature predictions ----
- # sizes = seq(35, 135, by = 1)
- # 
- # newdat <- replicate_df(ebs_grid, time_name = "SIZE_5MM", time_values = sizes) %>%
- #                   replicate_df(., time_name = "YEAR", time_values = years) %>%
- #           rename(LONGITUDE = X, LATITUDE = Y) %>%
- #           mutate(YEAR_F = as.factor(YEAR)) 
- # 
- #   pp <- predict(mod, newdat, type = "response")
- #   
- #   pp %>%
- #     st_as_sf(., coords = c("LONGITUDE", "LATITUDE"), crs =  "+proj=utm +zone=2") -> pred.sf
- #   
- #   snow.chela %>% 
- #     filter(LONGITUDE < 1050) %>%
- #     st_as_sf(., coords = c("LONGITUDE", "LATITUDE"), crs =  "+proj=utm +zone=2") -> chela.sf
- #   
- #   combined <- st_union(chela.sf)
- #   # Get convex hull polygon
- #   hull <- st_convex_hull(combined)
- #   buff_hull <- st_buffer(hull, dist =25) 
- #   
- #   dev.off()
- #  
- #   plot(buff_hull, border = 'red', lwd = 2)
- #   points(st_geometry(chela.sf))
- #   
- #   tt <- st_intersection(pred.sf, buff_hull)
- # 
- #   tt %>%
- #     cbind(st_coordinates(.)) %>%
- #     as.data.frame(.) %>%
- #     rename(LONGITUDE = X, LATITUDE = Y) %>%
- #     group_by(YEAR, LONGITUDE, LATITUDE) %>%
- #     reframe(p_mat = mean(est)) -> plot.dat
- #   
- #   plot.boundary <- akgfmaps::transform_data_frame_crs(data.frame(x = c(-178, -156), 
- #                                                                  y = c(54.5, 61.5)), 
- #                                                       out.crs = "+proj=longlat +datum=WGS84") %>%
- #     akgfmaps::transform_data_frame_crs(.,  
- #                                        out.crs = "+proj=utm +zone=2") %>%
- #     mutate(x = x/1000,
- #            y = y/1000)
- #   
- #   region_layers$akland %>%
- #     st_transform(., "+proj=utm +zone=2") -> land
- #   
- #   land$geometry <- land$geometry/1000
- #   
- #   
- #   region_layers$survey.area %>%
- #     st_transform(., "+proj=utm +zone=2") -> area
- #   
- #   area$geometry <- area$geometry/1000
- #   
- #   ggplot()+
- #     geom_tile(plot.dat, mapping = aes(LONGITUDE, LATITUDE, fill = p_mat), width = 28, height = 28)+
- #     geom_point(snow.chela, mapping = aes(LONGITUDE, LATITUDE), color = "black", size = 0.1, alpha = 0.8) +
- #     facet_wrap(~YEAR) + 
- #     theme_bw()+
- #     scale_x_continuous(breaks = seq(min(plot.dat$LONGITUDE), max(plot.dat$LONGITUDE), by = 1000))+
- #     scale_fill_gradient2(midpoint = mean(plot.dat$p_mat))+
- #     geom_sf(data = land, fill = "grey80", size = 0.1) +
- #     geom_sf(data = area, color = "black", fill = NA) +
- #     coord_sf(xlim = plot.boundary$x,
- #              ylim = plot.boundary$y) 
- #     
- #   
- #   ggsave("./Maturity data processing/Doc/snow_sdmTMB_spatialpmatpreds.png", width = 8, height = 7, units = "in")
- #   
+
  # SAM ----
  SAM.df <- tanner_sdmTMB_ogives %>%
    arrange(YEAR, SIZE, DISTRICT) %>%
@@ -636,68 +493,6 @@ tanner_results_df <-
  
  ggsave("./Maturity data processing/Doc/tanner_SAM_comparison.png", width = 8, height = 8, units = "in")
  
- # Mature male/female ratio ----
- # mat.male <- bioabund.dat %>% dplyr::filter(Estimator != "Legacy") %>%
- #             dplyr::select(YEAR, ABUNDANCE, ABUNDANCE_CI) %>%
- #             na.omit() %>%
- #           right_join(., data.frame(YEAR = seq(min(.$YEAR), max(.$YEAR))))
- #    
- # crab_dat <- readRDS("./Maturity data processing/Data/snow_survey_specimenEBS.rda")
- #   
- # 
- # mat.fem <- crabpack::calc_bioabund(crab_data = crab_dat, species = "SNOW",
- #                        crab_category = "mature_female") %>%
- #             mutate(ABUNDANCE = ABUNDANCE/1e6,
- #                    ABUNDANCE_CI = ABUNDANCE_CI/1e6) %>%
- #             dplyr::select(YEAR, ABUNDANCE, ABUNDANCE_CI) %>%
- #             filter(YEAR > 1987)
- # 
- # 
- # lg.male <- crabpack::calc_bioabund(crab_data = crab_dat, species = "SNOW",
- #                                    crab_category = "large_male") %>%
- #   mutate(ABUNDANCE = ABUNDANCE/1e6,
- #          ABUNDANCE_CI = ABUNDANCE_CI/1e6) %>%
- #   dplyr::select(YEAR, ABUNDANCE, ABUNDANCE_CI) %>%
- #   filter(YEAR > 1987)
- # 
- # prem.mat.fem <- crabpack::calc_bioabund(crab_data = crab_dat, species = "SNOW",
- #                                    crab_category = "mature_female", shell_condition = "new_hardshell") %>%
- #   mutate(ABUNDANCE = ABUNDANCE/1e6,
- #          ABUNDANCE_CI = ABUNDANCE_CI/1e6) %>%
- #   dplyr::select(YEAR, ABUNDANCE, ABUNDANCE_CI) %>%
- #   filter(YEAR > 1987)
- # 
- # esp.ratio <- data.frame(YEAR = lg.male$YEAR, ratio = lg.male$ABUNDANCE/mat.fem$ABUNDANCE) %>%
- #   rbind(., data.frame(YEAR = 2020, ratio = NA))
- #   
- # mat.ratio <- data.frame(YEAR = mat.male$YEAR, ratio = mat.male$ABUNDANCE/mat.fem$ABUNDANCE) %>%
- #   rbind(., data.frame(YEAR = 2020, ratio = NA))
- # 
- # baker.ratio <- data.frame(YEAR = mat.male$YEAR, ratio = mat.male$ABUNDANCE/(prem.mat.fem$ABUNDANCE + mat.male$ABUNDANCE)) %>%
- #   rbind(., data.frame(YEAR = 2020, ratio = NA))
- # 
- # sexrat.dat <- rbind(esp.ratio %>% mutate(type = "ESP (lg male/mat fem)"), 
- #                     mat.ratio %>% mutate(type = "Mature (mat male/mat fem)"),
- #                     baker.ratio %>% mutate(type = "Baker et al. (mat male/(prim mat fem + mat male))"))
- # 
- # 
- # ggplot(sexrat.dat %>% filter(YEAR > 1989), aes(YEAR, ratio))+
- #   geom_line()+
- #   facet_wrap(~type, ncol = 1, scales = "free_y")+
- #   geom_point()+
- #   theme_bw()+
- #   geom_smooth(method = "lm")+
- #   ggtitle("Opilio sex ratio")
- # 
- # summary(lme(YEAR ~ ratio, data = sexrat.dat%>% na.omit() %>% filter(YEAR >1987, type == "ESP (lg male/mat fem)"), random = ~ 1 | YEAR, correlation = corAR1()))
- # summary(lme(YEAR ~ ratio, data = sexrat.dat%>% na.omit() %>% filter(YEAR >1987, 
- #                                                                     type == "Baker et al. (mat male/(prim mat fem + mat male))"), 
- #             random = ~ 1 | YEAR, correlation = corAR1()))
- # 
- # summary(lme(YEAR ~ ratio, data = sexrat.dat %>% na.omit() %>% filter(YEAR >1987, type == "Mature (mat male/mat fem)"), random = ~ 1 | YEAR, correlation = corAR1()))
- # 
- # ggsave("./Maturity research/Figures/sexratio_comparison.png", width = 5, height = 6, units = "in")
- # 
  
 # SNOW ---------------------------------------------------------------------------------------------------
  # Load sdmTMB models ----
@@ -749,14 +544,10 @@ tanner_results_df <-
    mutate(LOWER = as.numeric(sub('.', '', LOWER)),
           UPPER = as.numeric(gsub('.$', '', UPPER)),
           SIZE_BINNED = (UPPER + LOWER)/2) %>%
-   # MATURE = case_when((SIZE <=35) ~ 0,
-   #                    (SIZE >= 135) ~ 1,
-   #TRUE ~ MATURE)) %>%
-   st_as_sf(., coords = c("LONGITUDE", "LATITUDE"), crs = "+proj=longlat +datum=WGS84") %>%
+    st_as_sf(., coords = c("LONGITUDE", "LATITUDE"), crs = "+proj=longlat +datum=WGS84") %>%
    st_transform(., crs = "+proj=utm +zone=2") %>%
    cbind(st_coordinates(.)) %>%
    as.data.frame(.) %>%
-   #filter(N_chela > 40) %>% #necessary for consecutive size correlations to run
    mutate(LATITUDE = Y/1000, # scale to km so values don't get too large
           LONGITUDE = X/1000,
           SIZE_CATEGORY = as.factor(paste0("SIZE", SIZE_BINNED)),
@@ -774,7 +565,6 @@ tanner_results_df <-
  # Calculate biomass and abundance ----
  # Legacy
  snow_legacy_spec <- snow_dat
- #snow_legacy_ogives <- read.csv("./Maturity data processing/Data/snow_legacy_ogives.csv") 
  snow_pars <- read.csv("./Maturity data processing/Data/snow_legacy_modelpars.csv") 
  
  snow_legacy_spec$specimen <-  snow_legacy_spec$specimen %>% 
@@ -1051,122 +841,7 @@ tanner_results_df <-
  
  ggsave("./Maturity data processing/Doc/snow_ogive_comparison_legacy.sdmTMB.png", width  = 10, height = 11, units = "in")
  
- 
- # Calculate mature crab at industry-preferred size ----
- # # Legacy
- # legacy.indpref <- crabpack::calc_bioabund(crab_data = legacy.spec, species = "SNOW", years = years, 
- #                                           size_min = 101, size_max = NULL,  sex = "male", 
- #                                           shell_condition = "new hardshell") %>%
- #                   right_join(., data.frame(YEAR = seq(min(.$YEAR), max(.$YEAR)))) %>%
- #                   mutate(Estimator = "Legacy",
- #                          ABUNDANCE = ABUNDANCE/1e6,
- #                          ABUNDANCE_CI = ABUNDANCE_CI/1e6) %>%
- #                   dplyr::select(SPECIES, YEAR, ABUNDANCE, BIOMASS_MT, Estimator) %>%
- #                   rename(ABUNDANCE_INDPREF = ABUNDANCE,
- #                          BIOMASS_MT_INDPREF = BIOMASS_MT)
- # # sdmTMB
- # sdmTMB.indpref <- crabpack::calc_bioabund(crab_data = sdmTMB.spec, species = "SNOW", years = years, 
- #                                           size_min = 101, size_max = NULL,  sex = "male", 
- #                                           shell_condition = "new hardshell") %>%
- #                     right_join(., data.frame(YEAR = seq(min(.$YEAR), max(.$YEAR)))) %>%
- #                     mutate(Estimator = "sdmTMB",
- #                            ABUNDANCE = ABUNDANCE/1e6,
- #                            ABUNDANCE_CI = ABUNDANCE_CI/1e6) %>%
- #                     dplyr::select(SPECIES, YEAR, ABUNDANCE, BIOMASS_MT, Estimator) %>%
- #                     rename(ABUNDANCE_INDPREF = ABUNDANCE,
- #                            BIOMASS_MT_INDPREF = BIOMASS_MT)
- # 
- # # Bind and join with bioabund dat
- # indpref.dat <- rbind(legacy.indpref, sdmTMB.indpref) %>%
- #                 right_join(., bioabund.dat) %>%
- #                 mutate(PROP_MAT.INDPREF = ABUNDANCE_INDPREF/ABUNDANCE) 
- # 
- # # Plot
- # ggplot(indpref.dat, aes(YEAR, PROP_MAT.INDPREF))+
- #   geom_line(mapping = aes(color = Estimator), linewidth = 1)+
- #   geom_point(mapping = aes(color = Estimator), size = 1.5)+
- #   scale_color_manual(values= c("darkgoldenrod", "cadetblue"), name = "")+
- #   scale_fill_manual(values= c("darkgoldenrod", "cadetblue"), name = "")+
- #   #geom_smooth(mapping = aes(color = Estimator, fill = Estimator), alpha = 0.15, method = "lm")+
- #   theme_bw()+
- #   ylab("Proportion mature industry-preferred")+
- #   xlab("Year")+
- #   theme(legend.position = "bottom", legend.direction = "horizontal",
- #         legend.text = element_text(size = 12),
- #         axis.title = element_text(size = 12))
- # 
- # ggsave("./Maturity data processing/Doc/snow_prop_matindpref_comparison_legacy.sdmTMB.png", width  = 7, height = 5, units = "in")
- 
- # Spatial proportion mature predictions ----
- # sizes = seq(35, 135, by = 1)
- # 
- # newdat <- replicate_df(ebs_grid, time_name = "SIZE_5MM", time_values = sizes) %>%
- #                   replicate_df(., time_name = "YEAR", time_values = years) %>%
- #           rename(LONGITUDE = X, LATITUDE = Y) %>%
- #           mutate(YEAR_F = as.factor(YEAR)) 
- # 
- #   pp <- predict(mod, newdat, type = "response")
- #   
- #   pp %>%
- #     st_as_sf(., coords = c("LONGITUDE", "LATITUDE"), crs =  "+proj=utm +zone=2") -> pred.sf
- #   
- #   snow.chela %>% 
- #     filter(LONGITUDE < 1050) %>%
- #     st_as_sf(., coords = c("LONGITUDE", "LATITUDE"), crs =  "+proj=utm +zone=2") -> chela.sf
- #   
- #   combined <- st_union(chela.sf)
- #   # Get convex hull polygon
- #   hull <- st_convex_hull(combined)
- #   buff_hull <- st_buffer(hull, dist =25) 
- #   
- #   dev.off()
- #  
- #   plot(buff_hull, border = 'red', lwd = 2)
- #   points(st_geometry(chela.sf))
- #   
- #   tt <- st_intersection(pred.sf, buff_hull)
- # 
- #   tt %>%
- #     cbind(st_coordinates(.)) %>%
- #     as.data.frame(.) %>%
- #     rename(LONGITUDE = X, LATITUDE = Y) %>%
- #     group_by(YEAR, LONGITUDE, LATITUDE) %>%
- #     reframe(p_mat = mean(est)) -> plot.dat
- #   
- #   plot.boundary <- akgfmaps::transform_data_frame_crs(data.frame(x = c(-178, -156), 
- #                                                                  y = c(54.5, 61.5)), 
- #                                                       out.crs = "+proj=longlat +datum=WGS84") %>%
- #     akgfmaps::transform_data_frame_crs(.,  
- #                                        out.crs = "+proj=utm +zone=2") %>%
- #     mutate(x = x/1000,
- #            y = y/1000)
- #   
- #   region_layers$akland %>%
- #     st_transform(., "+proj=utm +zone=2") -> land
- #   
- #   land$geometry <- land$geometry/1000
- #   
- #   
- #   region_layers$survey.area %>%
- #     st_transform(., "+proj=utm +zone=2") -> area
- #   
- #   area$geometry <- area$geometry/1000
- #   
- #   ggplot()+
- #     geom_tile(plot.dat, mapping = aes(LONGITUDE, LATITUDE, fill = p_mat), width = 28, height = 28)+
- #     geom_point(snow.chela, mapping = aes(LONGITUDE, LATITUDE), color = "black", size = 0.1, alpha = 0.8) +
- #     facet_wrap(~YEAR) + 
- #     theme_bw()+
- #     scale_x_continuous(breaks = seq(min(plot.dat$LONGITUDE), max(plot.dat$LONGITUDE), by = 1000))+
- #     scale_fill_gradient2(midpoint = mean(plot.dat$p_mat))+
- #     geom_sf(data = land, fill = "grey80", size = 0.1) +
- #     geom_sf(data = area, color = "black", fill = NA) +
- #     coord_sf(xlim = plot.boundary$x,
- #              ylim = plot.boundary$y) 
- #     
- #   
- #   ggsave("./Maturity data processing/Doc/snow_sdmTMB_spatialpmatpreds.png", width = 8, height = 7, units = "in")
- #   
+
  # SAM ----
  snow.SAM.df <- snow_sdmTMB_ogives %>%
    arrange(YEAR, SIZE) %>%
@@ -1225,67 +900,4 @@ tanner_results_df <-
          legend.text = element_text(size = 12))
  
  ggsave("./Maturity data processing/Doc/snow_SAM_comparison.png", width = 8, height = 6, units = "in")
- 
- # Mature male/female ratio ----
- # mat.male <- bioabund.dat %>% dplyr::filter(Estimator != "Legacy") %>%
- #             dplyr::select(YEAR, ABUNDANCE, ABUNDANCE_CI) %>%
- #             na.omit() %>%
- #           right_join(., data.frame(YEAR = seq(min(.$YEAR), max(.$YEAR))))
- #    
- # crab_dat <- readRDS("./Maturity data processing/Data/snow_survey_specimenEBS.rda")
- #   
- # 
- # mat.fem <- crabpack::calc_bioabund(crab_data = crab_dat, species = "SNOW",
- #                        crab_category = "mature_female") %>%
- #             mutate(ABUNDANCE = ABUNDANCE/1e6,
- #                    ABUNDANCE_CI = ABUNDANCE_CI/1e6) %>%
- #             dplyr::select(YEAR, ABUNDANCE, ABUNDANCE_CI) %>%
- #             filter(YEAR > 1987)
- # 
- # 
- # lg.male <- crabpack::calc_bioabund(crab_data = crab_dat, species = "SNOW",
- #                                    crab_category = "large_male") %>%
- #   mutate(ABUNDANCE = ABUNDANCE/1e6,
- #          ABUNDANCE_CI = ABUNDANCE_CI/1e6) %>%
- #   dplyr::select(YEAR, ABUNDANCE, ABUNDANCE_CI) %>%
- #   filter(YEAR > 1987)
- # 
- # prem.mat.fem <- crabpack::calc_bioabund(crab_data = crab_dat, species = "SNOW",
- #                                    crab_category = "mature_female", shell_condition = "new_hardshell") %>%
- #   mutate(ABUNDANCE = ABUNDANCE/1e6,
- #          ABUNDANCE_CI = ABUNDANCE_CI/1e6) %>%
- #   dplyr::select(YEAR, ABUNDANCE, ABUNDANCE_CI) %>%
- #   filter(YEAR > 1987)
- # 
- # esp.ratio <- data.frame(YEAR = lg.male$YEAR, ratio = lg.male$ABUNDANCE/mat.fem$ABUNDANCE) %>%
- #   rbind(., data.frame(YEAR = 2020, ratio = NA))
- #   
- # mat.ratio <- data.frame(YEAR = mat.male$YEAR, ratio = mat.male$ABUNDANCE/mat.fem$ABUNDANCE) %>%
- #   rbind(., data.frame(YEAR = 2020, ratio = NA))
- # 
- # baker.ratio <- data.frame(YEAR = mat.male$YEAR, ratio = mat.male$ABUNDANCE/(prem.mat.fem$ABUNDANCE + mat.male$ABUNDANCE)) %>%
- #   rbind(., data.frame(YEAR = 2020, ratio = NA))
- # 
- # sexrat.dat <- rbind(esp.ratio %>% mutate(type = "ESP (lg male/mat fem)"), 
- #                     mat.ratio %>% mutate(type = "Mature (mat male/mat fem)"),
- #                     baker.ratio %>% mutate(type = "Baker et al. (mat male/(prim mat fem + mat male))"))
- # 
- # 
- # ggplot(sexrat.dat %>% filter(YEAR > 1989), aes(YEAR, ratio))+
- #   geom_line()+
- #   facet_wrap(~type, ncol = 1, scales = "free_y")+
- #   geom_point()+
- #   theme_bw()+
- #   geom_smooth(method = "lm")+
- #   ggtitle("Opilio sex ratio")
- # 
- # summary(lme(YEAR ~ ratio, data = sexrat.dat%>% na.omit() %>% filter(YEAR >1987, type == "ESP (lg male/mat fem)"), random = ~ 1 | YEAR, correlation = corAR1()))
- # summary(lme(YEAR ~ ratio, data = sexrat.dat%>% na.omit() %>% filter(YEAR >1987, 
- #                                                                     type == "Baker et al. (mat male/(prim mat fem + mat male))"), 
- #             random = ~ 1 | YEAR, correlation = corAR1()))
- # 
- # summary(lme(YEAR ~ ratio, data = sexrat.dat %>% na.omit() %>% filter(YEAR >1987, type == "Mature (mat male/mat fem)"), random = ~ 1 | YEAR, correlation = corAR1()))
- # 
- # ggsave("./Maturity research/Figures/sexratio_comparison.png", width = 5, height = 6, units = "in")
- # 
  

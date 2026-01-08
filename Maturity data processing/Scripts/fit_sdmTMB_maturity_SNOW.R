@@ -6,7 +6,7 @@
 
 
 # LOAD LIBS/PARAMS ---------------------------------------------------------------------------------------
-source("./Maturity data processing/Scripts/1) load_libs_params.R")
+source("./Maturity data processing/Scripts/load_libs_params.R")
 
 # LOAD DATA ----------------------------------------------------------------------------------------------
 # Load minima data, calculate cutline params
@@ -79,8 +79,6 @@ snow.chela <-  read.csv("./Maturity data processing/Data/snow_tanner_cheladataba
 mod.dat <- snow.chela
 
 # Fit models with year fixed effect and smooth for size ----
-
-
 # Make mesh
 mat.msh <- sdmTMB::make_mesh(mod.dat, c("LONGITUDE","LATITUDE"), n_knots = 200, type = "kmeans")
 
@@ -145,21 +143,6 @@ results %>%
 
 write.csv(CV.results, "./Maturity research/Output/sdmTMB_ksmooth_CV.csv")
 
-
-# Fit best model and save
-mod <- sdmTMB(MATURE ~ s(SIZE_5MM, k = 13) + YEAR_F, #the 0 is there's a factor predictor for each YEAR, no intercept
-                spatial = "on",
-                spatiotemporal = "iid",
-                mesh = mat.msh,
-                family = binomial(),
-                #time_varying = ~ size_category, # allow the slope to change by year
-                #spatial_varying = ~ size_category, # allow the effect of size to vary by location
-                time = "YEAR",
-                extra_time = xtra.time,
-                anisotropy = TRUE,
-                data = mod.dat)
-
-saveRDS(mod, paste0(remote_dir, "SNOW/sdmTMB/s(SIZE, k=13)_iid_200_sdmTMB.rda"))
 
 # Cross validation for different model parameterizations ----
 # Define folds
@@ -341,134 +324,3 @@ sanity(mod.4)
 
 
 
-
-
-
-
-
-
-
-
-
-
-mod.1 <- sdmTMB(
-  MATURE ~ s(SIZE_5MM, k = 13) + YEAR_F, #the 0 is there's a factor predictor for each YEAR, no intercept
-  spatial = "on",
-  spatiotemporal = "iid",
-  mesh = mat.msh,
-  family = binomial(),
-  time = "YEAR",
-  extra_time = xtra.time,
-  anisotropy = TRUE,
-  data = mod.dat
-)
-cv.1 <- sdmTMB_cv(
-  MATURE ~ s(SIZE_5MM, k = 13) + YEAR_F, #the 0 is there's a factor predictor for each YEAR, no intercept
-  spatial = "on",
-  spatiotemporal = "iid",
-  mesh = mat.msh,
-  family = binomial(),
-  time = "YEAR",
-  extra_time = xtra.time,
-  anisotropy = TRUE,
-  data = mod.dat,
-  k_folds = n_folds,
-  fold_ids = mod.dat$fold
-)
-mat.msh <- sdmTMB::make_mesh(mod.dat, c("LONGITUDE","LATITUDE"), n_knots = 300, type = "kmeans")
-mod.2 <- sdmTMB(
-  MATURE ~ s(SIZE_5MM, k = 13) + YEAR_SCALED, #the 0 is there's a factor predictor for each YEAR, no intercept
-  spatial = "on",
-  spatiotemporal = "iid",
-  mesh = mat.msh,
-  family = binomial(),
-  time = "YEAR",
-  spatial_varying = ~ 0 + SIZE_5MM,
-  extra_time = xtra.time,
-  anisotropy = TRUE,
-  data = mod.dat
-)
-
-saveRDS(mod.2, paste0(remote_dir, "SNOW/sdmTMB/sdmTMB_spVAR_SIZE_k300.rda"))
-
-cv.2 <- sdmTMB_cv(
-  MATURE ~ s(SIZE_5MM, k = 13) + YEAR_SCALED, #the 0 is there's a factor predictor for each YEAR, no intercept
-  spatial = "on",
-  spatiotemporal = "iid",
-  mesh = mat.msh,
-  family = binomial(),
-  time = "YEAR",
-  spatial_varying = ~ 0 + SIZE_5MM,
-  extra_time = xtra.time,
-  anisotropy = TRUE,
-  data = mod.dat,
-  k_folds = n_folds,
-  fold_ids = mod.dat$fold
-)
-
-mod.3 <- sdmTMB(
-  MATURE ~ s(SIZE_5MM, k = 13) + YEAR_SCALED, #the 0 is there's a factor predictor for each YEAR, no intercept
-  spatial = "on",
-  spatiotemporal = "iid",
-  mesh = mat.msh,
-  family = binomial(),
-  time = "YEAR",
-  time_varying = ~ 0 + SIZE_5MM,
-  extra_time = xtra.time,
-  anisotropy = TRUE,
-  data = mod.dat
-)
-
-cv.3 <- sdmTMB_cv(
-  MATURE ~ s(SIZE_5MM, k = 13) + YEAR_F, #the 0 is there's a factor predictor for each YEAR, no intercept
-  spatial = "on",
-  spatiotemporal = "iid",
-  mesh = mat.msh,
-  family = binomial(),
-  time = "YEAR",
-  time_varying = ~ 0 + SIZE_5MM,
-  extra_time = xtra.time,
-  anisotropy = TRUE,
-  data = mod.dat,
-  k_folds = n_folds,
-  fold_ids = mod.dat$fold
-)
-
-mat.msh <- sdmTMB::make_mesh(mod.dat, c("LONGITUDE","LATITUDE"), n_knots = 300, type = "kmeans")
-mod.4 <- sdmTMB(
-  MATURE ~ s(SIZE_5MM, k = 13) + YEAR_F, #the 0 is there's a factor predictor for each YEAR, no intercept
-  spatial = "on",
-  spatiotemporal = "iid",
-  mesh = mat.msh,
-  family = binomial(),
-  time = "YEAR",
-  #time_varying = ~ 0 + SIZE_5MM,
-  extra_time = xtra.time,
-  anisotropy = TRUE,
-  data = mod.dat
-)
-cv.4 <- sdmTMB_cv(
-  MATURE ~ s(SIZE_5MM, k = 13) + YEAR_F, #the 0 is there's a factor predictor for each YEAR, no intercept
-  spatial = "on",
-  spatiotemporal = "iid",
-  mesh = mat.msh,
-  family = binomial(),
-  time = "YEAR",
-  #time_varying = ~ 0 + SIZE_5MM,
-  extra_time = xtra.time,
-  anisotropy = TRUE,
-  data = mod.dat,
-  k_folds = n_folds,
-  fold_ids = mod.dat$fold
-)
-
-
-par.results <- data.frame(AICc(mod.1, mod.2, mod.3, mod.4), 
-                          logLik = c(sum(cv.1$fold_loglik), sum(cv.2$fold_loglik), sum(cv.3$fold_loglik), sum(cv.4$fold_loglik)),
-                          terms = c("YEAR_F, no sptemp var",
-                                    "YEAR_SCALED, spatial var of size",
-                                    "YEAR_SCALED, temp var of size",
-                                    "YEAR_F, knots = 300"),
-                          pass_sanity = c("Y", "Y", "N", "Y")) %>%
-               arrange(., AICc)
-write.csv(par.results, "./Maturity data processing/Output/sdmTMB_terms_CV_SNOW.csv")

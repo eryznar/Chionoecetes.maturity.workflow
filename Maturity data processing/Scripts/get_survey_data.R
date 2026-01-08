@@ -6,7 +6,7 @@
 # the chela database be updated in time?
 
 # LOAD LIBS/PARAMS -----
-source("./Maturity data processing/Scripts/1) load_libs_params.R")
+source("./Maturity data processing/Scripts/load_libs_params.R")
 
 # Set channel
 channel <- "API"
