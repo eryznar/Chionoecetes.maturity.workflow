@@ -308,15 +308,7 @@ tanner_results_df <-
  ggsave("./Maturity data processing/Doc/tannerW_bioabund_comparison_legacy.sdmTMB.png", width = 7, height = 6, units = "in")
  
  # Calculate ogives ----
- tanner_legacy_ogives <- tanner_legacy_spec$specimen %>%
-   group_by(YEAR,DISTRICT, SIZE_5MM) %>%
-   summarise(PROP_MATURE_SE = sd(PROP_MATURE) * 1.96,
-             PROP_MATURE = mean(PROP_MATURE), .groups = "drop") %>%
-   mutate(Estimator = "Legacy") %>%
-   rename(SIZE = SIZE_5MM) %>%
-   na.omit()
-
- # legacy using gam prop_mature interpolation of 10mm down to 5mm bins
+  # legacy using gam prop_mature interpolation of 10mm down to 5mm bins
  tanner_legacy_ogives <- rbind((read.csv("./Maturity data processing/Doc/tanE_pmat_5mminterp.csv") %>% 
                                   rename(SIZE = SIZE_BIN) %>% mutate(DISTRICT = "E166")),
                                (read.csv("./Maturity data processing/Doc/tanW_pmat_5mminterp.csv") %>%
@@ -428,38 +420,101 @@ tanner_results_df <-
  
  
 
- # SAM ----
- SAM.df <- tanner_sdmTMB_ogives %>%
-   arrange(YEAR, SIZE, DISTRICT) %>%
-   group_by(YEAR, DISTRICT) %>%
-   group_modify(~{
-     df <- .x
-     i_upper <- which(df$PROP_MATURE>= 0.5)[1]
-     i_lower <- i_upper - 1
-     
-     if (!is.na(i_upper) && i_upper > 1) {
-       size_lower <- df$SIZE[i_lower]
-       prop_lower <- df$PROP_MATURE[i_lower] # this is weighted
-       size_upper <- df$SIZE[i_upper]
-       prop_upper <- df$PROP_MATURE[i_upper]
-       
-       SAM <- size_lower + ((0.5 - prop_lower) / (prop_upper - prop_lower)) * (size_upper - size_lower)
-       tibble(SAM = SAM)
-     } else {
-       tibble(SAM = NA_real_) # handle edge cases
-     }
-   })
+ # Calculate/plot ogives ----
+ ## Get specimen data
+ tanner.ogive.spec <-  readRDS("./Maturity data processing/Data/tanner_survey_specimenEBS.rda")$specimen %>%
+   filter(SHELL_CONDITION == 2, SEX == 1) %>%
+   mutate(SIZE_1MM = floor(SIZE),
+          BIN = cut_width(SIZE, width = 5, center = 2.5, closed = "left", dig.lab = 4),
+          BIN2 = BIN) %>%
+   separate(BIN2, sep = ",", into = c("LOWER", "UPPER")) %>%
+   mutate(LOWER = as.numeric(sub('.', '', LOWER)),
+          UPPER = as.numeric(gsub('.$', '', UPPER)),
+          SIZE_BINNED = (UPPER + LOWER)/2) %>%
+   st_as_sf(., coords = c("LONGITUDE", "LATITUDE"), crs = "+proj=longlat +datum=WGS84") %>%
+   st_transform(., crs = "+proj=utm +zone=2") %>%
+   cbind(st_coordinates(.)) %>%
+   as.data.frame(.) %>%
+   mutate(LATITUDE = Y/1000, # scale to km so values don't get too large
+          LONGITUDE = X/1000,
+          SIZE_CATEGORY = as.factor(paste0("SIZE", SIZE_BINNED)),
+          YEAR_F = as.factor(YEAR),
+          YEAR_SCALED = scale(YEAR)) %>%
+   rename(SIZE_5MM = SIZE_BINNED) %>%
+   filter(YEAR >1989 & !YEAR %in% c(2013, 2015))
  
+ ## Calculate Weighted mean proportion mature per sim, YEAR, DISTRICT, SIZE_5MM
+ tanner_long <- cbind(tanner.ogive.spec, tanner.pmat.sim) %>%
+   group_by(YEAR, DISTRICT, SIZE_5MM) %>%
+   summarise(
+     across(
+       matches("^[0-9]+$"),   # "1","2",...,"500"
+       ~ sum(.x * SAMPLING_FACTOR) / sum(SAMPLING_FACTOR),
+       .names = "wmean_{.col}"
+     ),
+     .groups = "drop"
+   ) %>%
+   pivot_longer(
+     starts_with("wmean_"),
+     names_to  = "sim",
+     values_to = "wmean"
+   ) %>%
+   mutate(
+     sim = as.integer(gsub("wmean_", "", sim))
+   )
  
- tanner_sdmTMB_SAM <- SAM.df %>%
-   filter(!(YEAR == 2011 & DISTRICT == "E166")) %>%
-   right_join(., expand.grid(YEAR = seq(min(.$YEAR), max(.$YEAR)), DISTRICT = c("E166", "W166"),
-                            Estimator = "sdmTMB")) 
-   
+ ## 2. Same SAM interpolation function
+ 
+ get_sam <- function(size, p) {
+   o <- order(size)
+   size <- size[o]; p <- p[o]
+   if (all(p < 0.5) || all(p > 0.5)) return(NA_real_)
+   i_upper <- which(p >= 0.5)[1]
+   i_lower <- i_upper - 1
+   if (is.na(i_upper) || i_upper <= 1) return(NA_real_)
+   size_lower <- size[i_lower]; size_upper <- size[i_upper]
+   prop_lower <- p[i_lower];    prop_upper <- p[i_upper]
+   size_lower + ((0.5 - prop_lower) / (prop_upper - prop_lower)) *
+     (size_upper - size_lower)
+ }
+ 
+ ## 3. SAM for each simulation, YEAR, DISTRICT
+ 
+ tanner_SAM_sims <- tanner_long %>%
+   group_by(YEAR, DISTRICT, sim) %>%
+   summarise(
+     SAM = get_sam(SIZE_5MM, wmean),
+     .groups = "drop"
+   )
  
 
  
- write.csv(tanner_sdmTMB_SAM, "./Maturity data processing/Output/tanner_SAM.csv")
+ 
+ 
+ ## 4. Summaries by YEAR, DISTRICT (mean, SD, SE, CI)
+ 
+ tanner_SAM_summary <- tanner_SAM_sims %>%
+   group_by(YEAR, DISTRICT) %>%
+   summarise(
+     SAM_mean = mean(SAM, na.rm = TRUE),
+     SAM_sd   = sd(SAM,   na.rm = TRUE),
+     SAM_se   = sd(SAM,   na.rm = TRUE) / sqrt(n()),
+     SAM_lo   = quantile(SAM, 0.025, na.rm = TRUE),
+     SAM_hi   = quantile(SAM, 0.975, na.rm = TRUE),
+     .groups  = "drop"
+   ) %>%
+   filter(!(YEAR == 2011 & DISTRICT == "E166")) %>%
+   right_join(., expand.grid(YEAR = seq(min(.$YEAR), max(.$YEAR)), DISTRICT = c("E166", "W166"),
+                             Estimator = "sdmTMB")) 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
  
  legacy_SAM <- read.csv("./Maturity data processing/Data/tanner_legacy_ogives.csv") %>% 
    filter(DISTRICT != "ALL") %>%
@@ -476,9 +531,12 @@ tanner_results_df <-
    #facet_wrap(~SAM_type, ncol = 1)+
    geom_line(legacy_SAM, mapping = aes(YEAR, SAM, color = as.factor(1)), linewidth = 1)+
    geom_point(legacy_SAM, mapping = aes(YEAR, SAM, color = as.factor(1)), size = 2)+
-   geom_errorbar(legacy_SAM, mapping = aes(YEAR, ymin = SAM-B_SE, ymax = SAM + B_SE, color = as.factor(1)), linewidth = 1)+
-   geom_point(tanner_sdmTMB_SAM, mapping = aes(YEAR, SAM, color = as.factor(2)), size = 2)+
-   geom_line(tanner_sdmTMB_SAM, mapping = aes(YEAR, SAM, color = as.factor(2)), linewidth = 1)+
+   geom_errorbar(legacy_SAM, mapping = aes(YEAR, ymin = SAM-B_SE*1.96, ymax = SAM + B_SE*1.96, color = as.factor(1)), linewidth = 1)+
+   # geom_point(tanner_sdmTMB_SAM, mapping = aes(YEAR, SAM, color = as.factor(2)), size = 2)+
+   # geom_line(tanner_sdmTMB_SAM, mapping = aes(YEAR, SAM, color = as.factor(2)), linewidth = 1)+
+   geom_line(tanner_SAM_summary, mapping = aes(YEAR, SAM_mean, color = as.factor(2)), linewidth = 1)+
+   geom_point(tanner_SAM_summary, mapping = aes(YEAR, SAM_mean, color = as.factor(2)), size = 2)+
+   geom_errorbar(tanner_SAM_summary, mapping = aes(YEAR, ymin = SAM_lo, ymax = SAM_hi, color = as.factor(2)), linewidth = 1)+
    scale_color_manual(values = c("darkgoldenrod", "cadetblue"), labels = c("Legacy", "sdmTMB"), name = "")+
    scale_fill_manual(values = c("darkgoldenrod", "cadetblue"), labels = c("Legacy", "sdmTMB"), name = "")+
    facet_wrap(~DISTRICT, nrow = 2, scales = "free_y")+
@@ -809,7 +867,6 @@ tanner_results_df <-
    rename(SIZE = SIZE_5MM) %>%
    mutate(Estimator = "sdmTMB")
  
- 
 
  # Bind and plot
  snow.ogive.dat <- rbind(snow_legacy_ogives, snow_sdmTMB_ogives %>% dplyr::select(!PROP_MATURE_SE))
@@ -843,31 +900,139 @@ tanner_results_df <-
  
 
  # SAM ----
- snow.SAM.df <- snow_sdmTMB_ogives %>%
-   arrange(YEAR, SIZE) %>%
+ snow_long <- cbind(snow.ogive.spec, snow.pmat.sim) %>%
+   group_by(YEAR, SIZE_5MM) %>%
+   summarise(
+     across(
+       matches("^[0-9]+$"),
+       ~ sum(.x * SAMPLING_FACTOR) / sum(SAMPLING_FACTOR),
+       .names = "wmean_{.col}"
+     ),
+     .groups = "drop"
+   ) %>%
+   pivot_longer(
+     starts_with("wmean_"),
+     names_to  = "sim",
+     values_to = "wmean"
+   ) %>%
+   mutate(
+     sim = as.integer(gsub("wmean_", "", sim))
+   )
+ 
+ snow_mean <- snow_long %>%
+   group_by(YEAR, SIZE_5MM) %>%
+   summarise(wmean_mean = mean(wmean), .groups = "drop")
+ 
+ ggplot() +
+   # all simulation ogives in faded grey
+   geom_line(
+     data = snow_long,
+     aes(x = SIZE_5MM, y = wmean, group = sim),
+     color = "darkgrey",
+     alpha = 0.2
+   ) +
+   # mean ogive in solid black
+   geom_line(
+     data = snow_mean,
+     aes(x = SIZE_5MM, y = wmean_mean),
+     color = "cadetblue",
+     linewidth = 1
+   ) +
+   facet_wrap(~ YEAR) +
+   labs(x = "Size (mm)", y = "Proportion mature") +
+   geom_rug(snow.ogive.dat %>% filter(Estimator == "sdmTMB"), mapping =aes(x = SIZE), sides = "b", inherit.aes = TRUE) +
+   theme_bw()+
+   xlim(0, 150)+
+   #scale_x_continuous(breaks = seq(0, 175, by = 10))+
+   ylab("Proportion mature")+
+   xlab("Carapace width (mm)")+
+   theme(legend.position = "bottom", legend.direction = "horizontal",
+         legend.text = element_text(size = 12),
+         legend.title = element_blank(),
+         axis.title = element_text(size = 12),
+         strip.text = element_text(size = 12),
+         axis.text = element_text(size = 10))
+ 
+ snow_ogive_sdmTMB <- snow_long %>%
+   group_by(YEAR, SIZE_5MM) %>%
+   summarise(
+     PROP_MATURE_mean = mean(wmean),
+     PROP_MATURE_lo   = quantile(wmean, 0.025),
+     PROP_MATURE_hi   = quantile(wmean, 0.975),
+     .groups = "drop"
+   ) %>%
+   mutate(Estimator = "sdmTMB")
+ 
+ ogive_plot_dat <- rbind(snow_ogive_sdmTMB %>% rename(PROP_MATURE = PROP_MATURE_mean, SIZE = SIZE_5MM), snow_legacy_ogives %>% mutate(PROP_MATURE_lo = NA, PROP_MATURE_hi = NA))
+ 
+ ggplot(ogive_plot_dat,  aes(SIZE, PROP_MATURE, color = Estimator))+
+   geom_ribbon(aes(SIZE, ymin = PROP_MATURE_lo, ymax = PROP_MATURE_hi, fill = Estimator), color = NA, alpha = 0.35)+
+   geom_line(linewidth = 1)+
+   scale_color_manual(values = c(
+     "Legacy"       = "darkgoldenrod",
+     "sdmTMB"       = "cadetblue",name = ""))+
+   scale_fill_manual(values = c(
+     "Legacy"       = "darkgoldenrod",
+     "sdmTMB"       = "cadetblue"), name = "", guide= "none")+
+   facet_wrap(~YEAR)+
+   geom_rug(snow.ogive.dat %>% filter(Estimator == "sdmTMB"), mapping =aes(x = SIZE), sides = "b", inherit.aes = TRUE) +
+   geom_hline(yintercept = 0.5, linetype = "dashed")+
+   theme_bw()+
+   xlim(0, 150)+
+   #scale_x_continuous(breaks = seq(0, 175, by = 10))+
+   ylab("Proportion mature")+
+   xlab("Carapace width (mm)")+
+   theme(legend.position = "bottom", legend.direction = "horizontal",
+         legend.text = element_text(size = 12),
+         legend.title = element_blank(),
+         axis.title = element_text(size = 12),
+         strip.text = element_text(size = 12),
+         axis.text = element_text(size = 10))
+ 
+ 
+ ggsave("./Maturity data processing/Doc/snow_ogive_comparison_legacy.sdmTMBwitherror.png", width  = 10, height = 11, units = "in")
+ 
+ 
+ 
+ 
+ get_sam <- function(size, p) {
+   o <- order(size)
+   size <- size[o]; p <- p[o]
+   if (all(p < 0.5) || all(p > 0.5)) return(NA_real_)
+   i_upper <- which(p >= 0.5)[1]
+   i_lower <- i_upper - 1
+   if (is.na(i_upper) || i_upper <= 1) return(NA_real_)
+   size_lower <- size[i_lower]; size_upper <- size[i_upper]
+   prop_lower <- p[i_lower];    prop_upper <- p[i_upper]
+   size_lower + ((0.5 - prop_lower) / (prop_upper - prop_lower)) *
+     (size_upper - size_lower)
+ }
+ 
+ snow_SAM_sims <- snow_long %>%
+   group_by(YEAR, sim) %>%
+   summarise(
+     SAM = get_sam(SIZE_5MM, wmean),
+     .groups = "drop"
+   )
+ 
+ 
+ snow_SAM_summary <- snow_SAM_sims %>%
    group_by(YEAR) %>%
-   group_modify(~{
-     df <- .x
-     i_upper <- which(df$PROP_MATURE>= 0.5)[1]
-     i_lower <- i_upper - 1
-     
-     if (!is.na(i_upper) && i_upper > 1) {
-       size_lower <- df$SIZE[i_lower]
-       prop_lower <- df$PROP_MATURE[i_lower] # this is weighted
-       size_upper <- df$SIZE[i_upper]
-       prop_upper <- df$PROP_MATURE[i_upper]
-       
-       SAM <- size_lower + ((0.5 - prop_lower) / (prop_upper - prop_lower)) * (size_upper - size_lower)
-       tibble(SAM = SAM)
-     } else {
-       tibble(SAM = NA_real_) # handle edge cases
-     }
-   })
+   summarise(
+     SAM_mean = mean(SAM, na.rm = TRUE),
+     SAM_sd   = sd(SAM,   na.rm = TRUE),
+     SAM_se  = sd(SAM,   na.rm = TRUE) / sqrt(n()),
+     SAM_lo   = quantile(SAM, 0.025, na.rm = TRUE),
+     SAM_hi   = quantile(SAM, 0.975, na.rm = TRUE),
+     .groups = "drop"
+   ) %>%
+   right_join(., data.frame(YEAR = seq(min(.$YEAR), max(.$YEAR))))
  
+ ggplot(snow_SAM_summary, aes(YEAR, SAM_mean))+
+   geom_errorbar(aes(YEAR, ymin = SAM_lo, ymax = SAM_hi))+
+   geom_point()+
+   geom_line()
  
- snow_sdmTMB_SAM <- snow.SAM.df %>%
-   right_join(., data.frame(YEAR = rep(seq(min(.$YEAR), max(.$YEAR)), 2))) %>%
-   distinct()
  
  pp <- lme(SAM ~ YEAR, data = snow_sdmTMB_SAM %>% na.omit(), random = ~ 1 | YEAR, correlation = corAR1())
  
@@ -877,7 +1042,7 @@ tanner_results_df <-
    dplyr::select(YEAR, B_EST, B_SE) %>% 
    distinct() %>%
    rename(SAM = B_EST) %>%
-   right_join(., data.frame(YEAR = rep(seq(min(.$YEAR), max(.$YEAR)), 2))) 
+   right_join(., data.frame(YEAR = seq(min(.$YEAR), max(.$YEAR)))) 
  
  
  
@@ -885,9 +1050,12 @@ tanner_results_df <-
    #facet_wrap(~SAM_type, ncol = 1)+
    geom_line(legacy_SAM, mapping = aes(YEAR, SAM, color = as.factor(1)), linewidth = 1)+
    geom_point(legacy_SAM, mapping = aes(YEAR, SAM, color = as.factor(1)), size = 2)+
-   geom_errorbar(legacy_SAM, mapping = aes(YEAR, ymin = SAM-B_SE, ymax = SAM + B_SE, color = as.factor(1)), linewidth = 1)+
-   geom_point(snow_sdmTMB_SAM, mapping = aes(YEAR, SAM, color = as.factor(2)), size = 2)+
-   geom_line(snow_sdmTMB_SAM, mapping = aes(YEAR, SAM, color = as.factor(2)), linewidth = 1)+
+   geom_errorbar(legacy_SAM, mapping = aes(YEAR, ymin = SAM-B_SE*1.96, ymax = SAM + B_SE*1.96, color = as.factor(1)), linewidth = 1)+
+   # geom_point(snow_sdmTMB_SAM, mapping = aes(YEAR, SAM, color = as.factor(2)), size = 2)+
+   # geom_line(snow_sdmTMB_SAM, mapping = aes(YEAR, SAM, color = as.factor(2)), linewidth = 1)+
+   geom_line(snow_SAM_summary, mapping = aes(YEAR, SAM_mean, color = as.factor(2)), linewidth = 1)+
+   geom_point(snow_SAM_summary, mapping = aes(YEAR, SAM_mean, color = as.factor(2)), size = 2)+
+   geom_errorbar(snow_SAM_summary, mapping = aes(YEAR, ymin = SAM_lo, ymax = SAM_hi, color = as.factor(2)), linewidth = 1)+
    scale_color_manual(values = c("darkgoldenrod", "cadetblue"), labels = c("Legacy", "sdmTMB"), name = "")+
    scale_fill_manual(values = c("darkgoldenrod", "cadetblue"), labels = c("Legacy", "sdmTMB"), name = "")+
    #facet_wrap(~DISTRICT)+

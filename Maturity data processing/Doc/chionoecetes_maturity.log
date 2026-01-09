@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (TeX Live 2025) (preloaded format=pdflatex 2026.1.4)  8 JAN 2026 10:34
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (TeX Live 2025) (preloaded format=pdflatex 2026.1.4)  9 JAN 2026 11:18
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -647,10 +647,10 @@ File: snow_spatialDHARMa_size.png Graphic file (type png)
 <use snow_spatialDHARMa_size.png>
 Package pdftex.def Info: snow_spatialDHARMa_size.png  used on input line 435.
 (pdftex.def)             Requested size: 469.76045pt x 469.76045pt.
-<snow_ogive_comparison_legacy.sdmTMB.png, id=170, 722.7pt x 794.97pt>
-File: snow_ogive_comparison_legacy.sdmTMB.png Graphic file (type png)
-<use snow_ogive_comparison_legacy.sdmTMB.png>
-Package pdftex.def Info: snow_ogive_comparison_legacy.sdmTMB.png  used on input line 444.
+<snow_ogive_comparison_legacy.sdmTMBwitherror.png, id=170, 722.7pt x 794.97pt>
+File: snow_ogive_comparison_legacy.sdmTMBwitherror.png Graphic file (type png)
+<use snow_ogive_comparison_legacy.sdmTMBwitherror.png>
+Package pdftex.def Info: snow_ogive_comparison_legacy.sdmTMBwitherror.png  used on input line 444.
 (pdftex.def)             Requested size: 469.76045pt x 516.73651pt.
 <snow_SAM_comparison.png, id=171, 578.16pt x 433.62pt>
 File: snow_SAM_comparison.png Graphic file (type png)
@@ -687,15 +687,15 @@ File: tanner_spatialDHARMa_size.png Graphic file (type png)
 <use tanner_spatialDHARMa_size.png>
 Package pdftex.def Info: tanner_spatialDHARMa_size.png  used on input line 507.
 (pdftex.def)             Requested size: 469.76045pt x 469.76045pt.
-<tannerE166_ogive_comparison_legacy.sdmTMB.png, id=178, 722.7pt x 794.97pt>
-File: tannerE166_ogive_comparison_legacy.sdmTMB.png Graphic file (type png)
-<use tannerE166_ogive_comparison_legacy.sdmTMB.png>
-Package pdftex.def Info: tannerE166_ogive_comparison_legacy.sdmTMB.png  used on input line 516.
+<tannerE166_ogive_comparison_legacy.sdmTMBwitherror.png, id=178, 722.7pt x 794.97pt>
+File: tannerE166_ogive_comparison_legacy.sdmTMBwitherror.png Graphic file (type png)
+<use tannerE166_ogive_comparison_legacy.sdmTMBwitherror.png>
+Package pdftex.def Info: tannerE166_ogive_comparison_legacy.sdmTMBwitherror.png  used on input line 516.
 (pdftex.def)             Requested size: 469.76045pt x 516.73651pt.
-<tannerW166_ogive_comparison_legacy.sdmTMB.png, id=179, 722.7pt x 794.97pt>
-File: tannerW166_ogive_comparison_legacy.sdmTMB.png Graphic file (type png)
-<use tannerW166_ogive_comparison_legacy.sdmTMB.png>
-Package pdftex.def Info: tannerW166_ogive_comparison_legacy.sdmTMB.png  used on input line 525.
+<tannerW166_ogive_comparison_legacy.sdmTMBwitherror.png, id=179, 722.7pt x 794.97pt>
+File: tannerW166_ogive_comparison_legacy.sdmTMBwitherror.png Graphic file (type png)
+<use tannerW166_ogive_comparison_legacy.sdmTMBwitherror.png>
+Package pdftex.def Info: tannerW166_ogive_comparison_legacy.sdmTMBwitherror.png  used on input line 525.
 (pdftex.def)             Requested size: 469.76045pt x 516.73651pt.
 <tanner_SAM_comparison.png, id=180, 578.16pt x 578.16pt>
 File: tanner_SAM_comparison.png Graphic file (type png)
@@ -712,7 +712,7 @@ File: tannerW_bioabund_comparison_legacy.sdmTMB.png Graphic file (type png)
 <use tannerW_bioabund_comparison_legacy.sdmTMB.png>
 Package pdftex.def Info: tannerW_bioabund_comparison_legacy.sdmTMB.png  used on input line 552.
 (pdftex.def)             Requested size: 469.76265pt x 402.65372pt.
-[13 <./cutline.png>] [14 <./snow_mesh_300k.png>] [15 <./snow_QQ_year.png>] [16 <./snow_QQ_size.png>] [17 <./snow_spatialDHARMa_year.png>] [18 <./snow_spatialDHARMa_size.png>] [19 <./snow_ogive_comparison_legacy.sdmTMB.png>] [20 <./snow_SAM_comparison.png>] [21 <./snow_bioabund_comparison_legacy.sdmTMB.png>] [22 <./tanner_mesh_200k.png>] [23 <./tanner_QQ_year.png>] [24 <./tanner_QQ_size.png>] [25 <./tanner_spatialDHARMa_year.png>] [26 <./tanner_spatialDHARMa_size.png>] [27 <./tannerE166_ogive_comparison_legacy.sdmTMB.png>] [28 <./tannerW166_ogive_comparison_legacy.sdmTMB.png>] [29 <./tanner_SAM_comparison.png>] [30 <./tannerE_bioabund_comparison_legacy.sdmTMB.png>] [31 <./tannerW_bioabund_comparison_legacy.sdmTMB.png>] (./chionoecetes_maturity.aux)
+[13 <./cutline.png>] [14 <./snow_mesh_300k.png>] [15 <./snow_QQ_year.png>] [16 <./snow_QQ_size.png>] [17 <./snow_spatialDHARMa_year.png>] [18 <./snow_spatialDHARMa_size.png>] [19 <./snow_ogive_comparison_legacy.sdmTMBwitherror.png>] [20 <./snow_SAM_comparison.png>] [21 <./snow_bioabund_comparison_legacy.sdmTMB.png>] [22 <./tanner_mesh_200k.png>] [23 <./tanner_QQ_year.png>] [24 <./tanner_QQ_size.png>] [25 <./tanner_spatialDHARMa_year.png>] [26 <./tanner_spatialDHARMa_size.png>] [27 <./tannerE166_ogive_comparison_legacy.sdmTMBwitherror.png>] [28 <./tannerW166_ogive_comparison_legacy.sdmTMBwitherror.png>] [29 <./tanner_SAM_comparison.png>] [30 <./tannerE_bioabund_comparison_legacy.sdmTMB.png>] [31 <./tannerW_bioabund_comparison_legacy.sdmTMB.png>] (./chionoecetes_maturity.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2025-12-29>
@@ -720,14 +720,14 @@ L3 programming layer <2025-12-29>
  ) 
 Here is how much of TeX's memory you used:
  14657 strings out of 469519
- 239537 string characters out of 5467613
- 655218 words of memory out of 5000000
+ 239834 string characters out of 5467613
+ 656297 words of memory out of 5000000
  42977 multiletter control sequences out of 15000+600000
  689057 words of font info for 86 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
  89i,11n,93p,1665b,484s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx10.pfb><c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx12.pfb><c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmex10.pfb><c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi10.pfb><c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi5.pfb><c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi7.pfb><c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr10.pfb><c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr12.pfb><c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr17.pfb><c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr7.pfb><c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmri10.pfb><c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmri12.pfb><c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy10.pfb><c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy7.pfb><c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmtt10.pfb>
-Output written on chionoecetes_maturity.pdf (31 pages, 12427229 bytes).
+Output written on chionoecetes_maturity.pdf (31 pages, 12663970 bytes).
 PDF statistics:
  399 PDF objects out of 1000 (max. 8388607)
  304 compressed objects within 4 object streams
