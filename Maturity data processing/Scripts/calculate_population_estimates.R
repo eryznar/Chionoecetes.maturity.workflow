@@ -114,7 +114,7 @@ calc_maturepop_estimates <- function(model, crab_data, years, species){
     for(ii in 1:nsim){
       print(paste0("Calculating bioabund sim ", ii))
 
-      fit.sim <- pmat.sim[,ii]
+      fit.sim <- pmat.sim[,1]
 
       # replace PROP_MATURE with each model simulation draw
       crab_data$specimen <- cbind(sub1, fit.sim) %>%
@@ -124,7 +124,7 @@ calc_maturepop_estimates <- function(model, crab_data, years, species){
       # calculate bioabund for each simulation
       bioabund_sim <-  crabpack::calc_bioabund(crab_data = crab_data, species = species,
                                                            size_min = NULL, size_max = NULL,  sex = "male",
-                                                           shell_condition = "new hardshell")
+                                                           shell_condition = "new_hardshell")
 
       # Bind
       bioabund.df <- rbind(bioabund.df,  bioabund_sim %>% mutate(sim = ii))
@@ -233,6 +233,7 @@ calc_maturepop_estimates <- function(model, crab_data, years, species){
     geom_hline(yintercept = 0.5, linetype = "dashed")+
     theme_bw()+
     xlim(0, 150)+
+    ggtitle("Snow crab")+
     #scale_x_continuous(breaks = seq(0, 175, by = 10))+
     ylab("Proportion mature")+
     xlab("Carapace width (mm)")+
@@ -243,9 +244,25 @@ calc_maturepop_estimates <- function(model, crab_data, years, species){
           strip.text = element_text(size = 12),
           axis.text = element_text(size = 10))
   
-  ggsave("./Maturity data processing/Doc/snow_ogive_comparison_legacy.sdmTMBwitherror.png", width  = 10, height = 11, units = "in")
+  ggsave("./Maturity data processing/Doc/snow_ogive_comparison_legacy.sdmTMBwitherror.png", width  = 10, height = 10, units = "in")
   
-  
+  ggplot(snow_legacy_ogives %>% filter(!YEAR %in% c(2008, 2012, 2014, 2016)), aes(SIZE, PROP_MATURE, color = Estimator, group = YEAR))+
+    geom_line(linewidth = 1)+
+    scale_color_manual(values = c(
+      "Legacy"       = "darkgoldenrod"))+
+    #facet_wrap(~YEAR)+
+    geom_hline(yintercept = 0.5, linetype = "dashed")+
+    theme_bw()+
+    ggtitle("Snow crab")+
+    #scale_x_continuous(breaks = seq(0, 175, by = 10))+
+    ylab("Probability mature")+
+    xlab("Carapace width (mm)")+
+    theme(legend.position = "bottom", legend.direction = "horizontal",
+          legend.text = element_text(size = 12),
+          legend.title = element_blank(),
+          axis.title = element_text(size = 12),
+          strip.text = element_text(size = 12),
+          axis.text = element_text(size = 10)) -> l.1
   # SAM ----
   # sdmTMB SAM
   snow_SAM <- snow.out$SAM
@@ -268,14 +285,31 @@ calc_maturepop_estimates <- function(model, crab_data, years, species){
     scale_color_manual(values = c("darkgoldenrod", "cadetblue"), labels = c("Legacy", "sdmTMB"), name = "")+
     scale_fill_manual(values = c("darkgoldenrod", "cadetblue"), labels = c("Legacy", "sdmTMB"), name = "")+
     theme_bw()+
+    ggtitle("Snow crab")+
     xlab("Year")+
     ylab("Size at 50% maturity (mm)")+
     theme(legend.position = "bottom", legend.direction = "horizontal",
           axis.text = element_text(size = 12),
           axis.title = element_text(size = 12),
-          legend.text = element_text(size = 12))
+          legend.text = element_text(size = 12)) -> ls.1
   
   ggsave("./Maturity data processing/Doc/snow_SAM_comparison.png", width = 8, height = 6, units = "in")
+  
+  # Plot
+  ggplot()+
+    geom_line(legacy_SAM, mapping = aes(YEAR, SAM, color = as.factor(1)), linewidth = 1)+
+    geom_point(legacy_SAM, mapping = aes(YEAR, SAM, color = as.factor(1)), size = 2)+
+    geom_errorbar(legacy_SAM, mapping = aes(YEAR, ymin = SAM-B_SE*1.96, ymax = SAM + B_SE*1.96, color = as.factor(1)), linewidth = 1)+
+    scale_color_manual(values = c("darkgoldenrod"), labels = c("Legacy"), name = "")+
+    scale_fill_manual(values = c("darkgoldenrod"), labels = c("Legacy"), name = "")+
+    theme_bw()+
+    ggtitle("Snow SAM")+
+    xlab("Year")+
+    ylab("Size at 50% maturity (mm)")+
+    theme(legend.position = "bottom", legend.direction = "horizontal",
+          axis.text = element_text(size = 12),
+          axis.title = element_text(size = 12),
+          legend.text = element_text(size = 12)) -> ls.1
   
   
   # MATURE BIOMASS/ABUNDANCE ----
@@ -285,7 +319,7 @@ calc_maturepop_estimates <- function(model, crab_data, years, species){
   # Legacy
   snow_legacy_spec <- snow_dat
   snow_legacy_spec$specimen <- snow_dat$specimen %>%
-    filter(YEAR %in% snow_yrs, SPECIES == species, SHELL_CONDITION == 2, SEX == 1) %>%
+    filter(YEAR %in% snow_yrs, SPECIES == "SNOW", SHELL_CONDITION == 2, SEX == 1) %>%
     mutate(BIN_5MM = cut_width(SIZE_1MM, width = 5, center = 2.5, closed = "left", dig.lab = 4),
            BIN2 = BIN_5MM) %>%
     separate(BIN2, sep = ",", into = c("LOWER", "UPPER")) %>%
@@ -342,10 +376,9 @@ calc_maturepop_estimates <- function(model, crab_data, years, species){
     scale_fill_manual(values = c("darkgoldenrod", "cadetblue"), name = "")+
     theme_bw()+
     ylab("Abundance (millions)")+
-    ggtitle("Snow morphometric mature males (newshell)")+
+    ggtitle("Snow crab")+
     xlab("Year")+
-    theme(axis.text.x = element_blank(),
-          axis.title.x = element_blank(),
+    theme(
           axis.text.y = element_text(size = 12), 
           axis.title.y = element_text(size = 12),
           legend.position = "bottom",
@@ -412,7 +445,7 @@ calc_maturepop_estimates <- function(model, crab_data, years, species){
       "Legacy"       = "darkgoldenrod",
       "sdmTMB"       = "cadetblue"), name = "", guide= "none")+
     facet_wrap(~YEAR)+
-    geom_rug(ogive_plot_dat %>% filter(Estimator == "sdmTMB"), mapping =aes(x = SIZE), sides = "b", inherit.aes = TRUE) +
+    geom_rug(ogive_plot_dat %>% filter(Estimator == "sdmTMB", DISTRICT == "W166" & !YEAR %in% c(2013, 2015)), mapping =aes(x = SIZE), sides = "b", inherit.aes = TRUE) +
     geom_hline(yintercept = 0.5, linetype = "dashed")+
     theme_bw()+
     ggtitle("Tanner West")+
@@ -425,7 +458,7 @@ calc_maturepop_estimates <- function(model, crab_data, years, species){
           strip.text = element_text(size = 12),
           axis.text = element_text(size = 10))
   
-  ggsave("./Maturity data processing/Doc/tannerW166_ogive_comparison_legacy.sdmTMBwitherror.png", width  = 10, height = 11, units = "in")
+  ggsave("./Maturity data processing/Doc/tannerW166_ogive_comparison_legacy.sdmTMBwitherror.png", width  = 10, height = 10, units = "in")
   
   
   ggplot(ogive_plot_dat %>% filter(DISTRICT == "E166" & !YEAR %in% c(2011, 2013, 2015)),  aes(SIZE, PROP_MATURE, color = Estimator))+
@@ -438,7 +471,7 @@ calc_maturepop_estimates <- function(model, crab_data, years, species){
              "Legacy"       = "darkgoldenrod",
              "sdmTMB"       = "cadetblue"), name = "", guide= "none")+
            facet_wrap(~YEAR)+
-           geom_rug(ogive_plot_dat %>% filter(Estimator == "sdmTMB"), mapping =aes(x = SIZE), sides = "b", inherit.aes = TRUE) +
+           geom_rug(ogive_plot_dat %>% filter(Estimator == "sdmTMB", DISTRICT == "E166" & !YEAR %in% c(2011, 2013, 2015)), mapping =aes(x = SIZE), sides = "b", inherit.aes = TRUE) +
            geom_hline(yintercept = 0.5, linetype = "dashed")+
            theme_bw()+
            ggtitle("Tanner East")+
@@ -451,8 +484,53 @@ calc_maturepop_estimates <- function(model, crab_data, years, species){
                  strip.text = element_text(size = 12),
                  axis.text = element_text(size = 10))
          
-  ggsave("./Maturity data processing/Doc/tannerE166_ogive_comparison_legacy.sdmTMBwitherror.png", width  = 10, height = 11, units = "in")
+  ggsave("./Maturity data processing/Doc/tannerE166_ogive_comparison_legacy.sdmTMBwitherror.png", width  = 10, height = 10, units = "in")
          
+  ggplot(tanner_legacy_ogives %>% filter(DISTRICT == "E166"), aes(SIZE, PROP_MATURE, color = Estimator, group = YEAR))+
+    geom_line(linewidth = 1)+
+    scale_color_manual(values = c(
+      "Legacy"       = "darkgoldenrod"))+
+    #facet_wrap(~YEAR)+
+    geom_hline(yintercept = 0.5, linetype = "dashed")+
+    theme_bw()+
+    ggtitle("Tanner East")+
+    #scale_x_continuous(breaks = seq(0, 175, by = 10))+
+    ylab("Probability mature")+
+    xlab("Carapace width (mm)")+
+    theme(legend.position = "bottom", legend.direction = "horizontal",
+          legend.text = element_text(size = 12),
+          legend.title = element_blank(),
+          axis.title = element_text(size = 12),
+          strip.text = element_text(size = 12),
+          axis.text = element_text(size = 10)) -> l.2
+  
+  ggplot(tanner_legacy_ogives %>% filter(DISTRICT == "W166"), aes(SIZE, PROP_MATURE, color = Estimator, group = YEAR))+
+    geom_line(linewidth = 1)+
+    scale_color_manual(values = c(
+      "Legacy"       = "darkgoldenrod"))+
+    #facet_wrap(~YEAR)+
+    geom_hline(yintercept = 0.5, linetype = "dashed")+
+    theme_bw()+
+    ggtitle("Tanner West")+
+    #scale_x_continuous(breaks = seq(0, 175, by = 10))+
+    ylab("Probability mature")+
+    xlab("Carapace width (mm)")+
+    theme(legend.position = "bottom", legend.direction = "horizontal",
+          legend.text = element_text(size = 12),
+          legend.title = element_blank(),
+          axis.title = element_text(size = 12),
+          strip.text = element_text(size = 12),
+          axis.text = element_text(size = 10)) -> l.3
+  
+  l.1/l.2/l.3 +
+    plot_layout(guides = "collect", axis_titles = "collect") & 
+    theme(
+      legend.position = "bottom",
+      axis.title.x = element_text(),   # keep x title only on bottom row
+      axis.title.y = element_text()    # shared y title
+    )
+  
+  ggsave("./Maturity data processing/Figures/legacy_ogives_CPT.png", width = 7, height = 8)
   # SAM ----
   # sdmTMB SAM
   tanner_SAM <- tanner.out$SAM %>%
@@ -491,6 +569,89 @@ calc_maturepop_estimates <- function(model, crab_data, years, species){
           legend.text = element_text(size = 12))
   
   ggsave("./Maturity data processing/Doc/tanner_SAM_comparison.png", width = 8, height = 6, units = "in")
+  
+  # Plot
+  eSAM <- legacy_SAM %>% filter(DISTRICT == "E166")
+  eSAM2 <- tanner_SAM %>% filter(DISTRICT == "E166")
+  ggplot()+
+    geom_line(eSAM, mapping = aes(YEAR, SAM, color = as.factor(1)), linewidth = 1)+
+    geom_point(eSAM, mapping = aes(YEAR, SAM, color = as.factor(1)), size = 2)+
+    geom_errorbar(eSAM, mapping = aes(YEAR, ymin = SAM-B_SE*1.96, ymax = SAM + B_SE*1.96, color = as.factor(1)), linewidth = 1)+
+    geom_line(eSAM2, mapping = aes(YEAR, SAM_mean, color = as.factor(2)), linewidth = 1)+
+    geom_point(eSAM2, mapping = aes(YEAR, SAM_mean, color = as.factor(2)), size = 2)+
+    geom_errorbar(eSAM2, mapping = aes(YEAR, ymin = SAM_lo, ymax = SAM_hi, color = as.factor(2)), linewidth = 1)+
+    scale_color_manual(values = c("darkgoldenrod", "cadetblue"), labels = c("Legacy", "sdmTMB"), name = "")+
+    scale_fill_manual(values = c("darkgoldenrod", "cadetblue"), labels = c("Legacy", "sdmTMB"), name = "")+
+    theme_bw()+
+    ggtitle("Tanner East")+
+    xlab("Year")+
+    ylab("Size at 50% maturity (mm)")+
+    theme(legend.position = "bottom", legend.direction = "horizontal",
+          axis.text = element_text(size = 12),
+          axis.title = element_text(size = 12),
+          legend.text = element_text(size = 12)) -> ls.2
+  
+  wSAM <- legacy_SAM %>% filter(DISTRICT == "W166")
+  wSAM2 <- tanner_SAM %>% filter(DISTRICT == "W166")
+  ggplot()+
+    geom_line(wSAM, mapping = aes(YEAR, SAM, color = as.factor(1)), linewidth = 1)+
+    geom_point(wSAM, mapping = aes(YEAR, SAM, color = as.factor(1)), size = 2)+
+    geom_errorbar(wSAM, mapping = aes(YEAR, ymin = SAM-B_SE*1.96, ymax = SAM + B_SE*1.96, color = as.factor(1)), linewidth = 1)+
+    geom_line(wSAM2, mapping = aes(YEAR, SAM_mean, color = as.factor(2)), linewidth = 1)+
+    geom_point(wSAM2, mapping = aes(YEAR, SAM_mean, color = as.factor(2)), size = 2)+
+    geom_errorbar(wSAM2, mapping = aes(YEAR, ymin = SAM_lo, ymax = SAM_hi, color = as.factor(2)), linewidth = 1)+
+    scale_color_manual(values = c("darkgoldenrod", "cadetblue"), labels = c("Legacy", "sdmTMB"), name = "")+
+    scale_fill_manual(values = c("darkgoldenrod", "cadetblue"), labels = c("Legacy", "sdmTMB"), name = "")+
+    theme_bw()+
+    ggtitle("Tanner West")+
+    xlab("Year")+
+    ylab("Size at 50% maturity (mm)")+
+    theme(legend.position = "bottom", legend.direction = "horizontal",
+          axis.text = element_text(size = 12),
+          axis.title = element_text(size = 12),
+          legend.text = element_text(size = 12)) -> ls.3
+  
+  
+  ls.1/ls.2/ls.3 + plot_layout(guides = "collect", axes = "collect") & theme(legend.position = "bottom", legend.direction = "horizontal")
+  
+  ggsave("./Maturity data processing/Figures/legacysdmTMB_SAM_CPT.png", width = 7, height = 8)
+  
+  
+  eSAM <- legacy_SAM %>% filter(DISTRICT == "E166")
+  ggplot()+
+    geom_line(eSAM, mapping = aes(YEAR, SAM, color = as.factor(1)), linewidth = 1)+
+    geom_point(eSAM, mapping = aes(YEAR, SAM, color = as.factor(1)), size = 2)+
+    geom_errorbar(eSAM, mapping = aes(YEAR, ymin = SAM-B_SE*1.96, ymax = SAM + B_SE*1.96, color = as.factor(1)), linewidth = 1)+
+    scale_color_manual(values = c("darkgoldenrod"), labels = c("Legacy"), name = "")+
+    scale_fill_manual(values = c("darkgoldenrod"), labels = c("Legacy"), name = "")+
+    theme_bw()+
+    ggtitle("Tanner East")+
+    xlab("Year")+
+    ylab("Size at 50% maturity (mm)")+
+    theme(legend.position = "bottom", legend.direction = "horizontal",
+          axis.text = element_text(size = 12),
+          axis.title = element_text(size = 12),
+          legend.text = element_text(size = 12)) -> ls.2
+  
+  wSAM <- legacy_SAM %>% filter(DISTRICT == "W166")
+  ggplot()+
+    geom_line(wSAM, mapping = aes(YEAR, SAM, color = as.factor(1)), linewidth = 1)+
+    geom_point(wSAM, mapping = aes(YEAR, SAM, color = as.factor(1)), size = 2)+
+    geom_errorbar(wSAM, mapping = aes(YEAR, ymin = SAM-B_SE*1.96, ymax = SAM + B_SE*1.96, color = as.factor(1)), linewidth = 1)+
+    scale_color_manual(values = c("darkgoldenrod"), labels = c("Legacy"), name = "")+
+    scale_fill_manual(values = c("darkgoldenrod"), labels = c("Legacy"), name = "")+
+    theme_bw()+
+    ggtitle("Tanner West")+
+    xlab("Year")+
+    ylab("Size at 50% maturity (mm)")+
+    theme(legend.position = "bottom", legend.direction = "horizontal",
+          axis.text = element_text(size = 12),
+          axis.title = element_text(size = 12),
+          legend.text = element_text(size = 12)) -> ls.3
+  
+  ls.1/ls.2/ls.3 + plot_layout(guides = "collect", axes = "collect") & theme(legend.position = "bottom")
+  ggsave("./Maturity data processing/Figures/legacy_SAM_CPT.png", width = 7, height = 8)
+  
   
   # MATURE BIOMASS/ABUNDANCE ----
   # sdmTMB
@@ -562,10 +723,9 @@ calc_maturepop_estimates <- function(model, crab_data, years, species){
     scale_fill_manual(values = c("darkgoldenrod", "cadetblue"), name = "")+
     theme_bw()+
     ylab("Abundance (millions)")+
-    ggtitle("Tanner East morphometric mature males (newshell)")+
+    ggtitle("Tanner East")+
     xlab("Year")+
-    theme(axis.text.x = element_blank(),
-          axis.title.x = element_blank(),
+    theme(
           axis.text.y = element_text(size = 12), 
           axis.title.y = element_text(size = 12),
           legend.position = "bottom",
@@ -609,11 +769,9 @@ calc_maturepop_estimates <- function(model, crab_data, years, species){
     scale_fill_manual(values = c("darkgoldenrod", "cadetblue"), name = "")+
     theme_bw()+
     ylab("Abundance (millions)")+
-    ggtitle("Tanner West morphometric mature males (newshell)")+
+    ggtitle("Tanner West")+
     xlab("Year")+
-    theme(axis.text.x = element_blank(),
-          axis.title.x = element_blank(),
-          axis.text.y = element_text(size = 12), 
+    theme(axis.text.y = element_text(size = 12), 
           axis.title.y = element_text(size = 12),
           legend.position = "bottom",
           legend.direction = "horizontal")
@@ -642,4 +800,87 @@ calc_maturepop_estimates <- function(model, crab_data, years, species){
     theme(legend.position = "bottom", legend.text = element_text(size = 12))
   
   ggsave("./Maturity data processing/Doc/tannerW_bioabund_comparison_legacy.sdmTMB.png", width = 7, height = 6, units = "in")
+  
+  
+  p1/e1/w1 + plot_layout(guides = "collect", axes = "collect") & theme(legend.position = "bottom", legend.text=element_text(size = 12))
+  ggsave("./Maturity data processing/Figures/legacysdmTMB_bioabund_CPT.png", width = 7, height = 8)
+  
+  
+  p1 <- ggplot()+
+    geom_point(snow_bioabund_dat %>% filter(YEAR %in% c(2013, 2015), Estimator == "Legacy"), mapping = aes(YEAR, ABUNDANCE, color = Estimator))+
+    geom_errorbar(snow_bioabund_dat %>% filter(YEAR %in% c(2013, 2015), Estimator == "Legacy"), mapping = aes(x = YEAR, ymin = ABUNDANCE - ABUNDANCE_CI, ymax = ABUNDANCE + ABUNDANCE_CI, 
+                                                                                       color= Estimator), linewidth = 1)+
+    geom_ribbon(snow_bioabund_dat %>% filter(Estimator == "Legacy"), mapping = aes(x = YEAR, ymin = ABUNDANCE - ABUNDANCE_CI, ymax = ABUNDANCE + ABUNDANCE_CI, 
+                                                 fill= Estimator), alpha = 0.15)+
+    geom_line(snow_bioabund_dat %>% filter(Estimator == "Legacy"), mapping = aes(YEAR, ABUNDANCE, color = Estimator), linewidth = 0.75)+
+    scale_color_manual(values = c("darkgoldenrod", "cadetblue"), name = "")+
+    scale_fill_manual(values = c("darkgoldenrod", "cadetblue"), name = "")+
+    theme_bw()+
+    ylab("Abundance (millions)")+
+    ggtitle("Snow morphometric mature males (newshell)")+
+    xlab("Year")+
+    theme(axis.text.y = element_text(size = 12), 
+          axis.title.y = element_text(size = 12),
+          legend.position = "bottom",
+          legend.direction = "horizontal")
+  
+  
+  e1 <- ggplot(tanner_bioabund_dat %>% filter(DISTRICT == "E166", Estimator =="Legacy"), aes(YEAR, ABUNDANCE))+
+    geom_point(tanner_bioabund_dat %>% filter(DISTRICT == "E166", Estimator =="Legacy", YEAR %in% c(2012, 2014)),
+               mapping = aes(color = Estimator))+
+    geom_errorbar(tanner_bioabund_dat %>% filter(DISTRICT == "E166", Estimator =="Legacy", YEAR %in% c(2012, 2014)),
+                  mapping = aes(x = YEAR, ymin = ABUNDANCE - ABUNDANCE_CI, ymax = ABUNDANCE + ABUNDANCE_CI, 
+                                color= Estimator), linewidth = 1)+
+    geom_ribbon(mapping = aes(x = YEAR, ymin = ABUNDANCE - ABUNDANCE_CI, ymax = ABUNDANCE + ABUNDANCE_CI, 
+                              fill= Estimator), alpha = 0.15)+
+    geom_line(mapping = aes(color = Estimator), linewidth = 0.75)+
+    scale_color_manual(values = c("darkgoldenrod", "cadetblue"), name = "")+
+    scale_fill_manual(values = c("darkgoldenrod", "cadetblue"), name = "")+
+    theme_bw()+
+    ylab("Abundance (millions)")+
+    ggtitle("Tanner East")+
+    xlab("Year")+
+    theme(axis.text.y = element_text(size = 12), 
+          axis.title.y = element_text(size = 12),
+          legend.position = "bottom",
+          legend.direction = "horizontal")
+  
+  w1 <- ggplot(tanner_bioabund_dat %>% filter(DISTRICT == "W166", Estimator == "Legacy"), aes(YEAR, ABUNDANCE))+
+    geom_point(tanner_bioabund_dat %>% filter(DISTRICT == "W166",Estimator == "Legacy", YEAR %in% c(2014)),
+               mapping = aes(color = Estimator))+
+    geom_errorbar(tanner_bioabund_dat %>% filter(DISTRICT == "W166", Estimator == "Legacy", YEAR %in% c(2014)),
+                  mapping = aes(x = YEAR, ymin = ABUNDANCE - ABUNDANCE_CI, ymax = ABUNDANCE + ABUNDANCE_CI, 
+                                color= Estimator), linewidth = 1)+
+    geom_ribbon(mapping = aes(x = YEAR, ymin = ABUNDANCE - ABUNDANCE_CI, ymax = ABUNDANCE + ABUNDANCE_CI, 
+                              fill= Estimator), alpha = 0.15)+
+    geom_line(mapping = aes(color = Estimator), linewidth = 0.75)+
+    scale_color_manual(values = c("darkgoldenrod", "cadetblue"), name = "")+
+    scale_fill_manual(values = c("darkgoldenrod", "cadetblue"), name = "")+
+    theme_bw()+
+    ylab("Abundance (millions)")+
+    ggtitle("Tanner West")+
+    xlab("Year")+
+    theme( axis.text.y = element_text(size = 12), 
+          axis.title.y = element_text(size = 12),
+          legend.position = "bottom",
+          legend.direction = "horizontal")
+  
+  p1/e1/w1 + plot_layout(guides = "collect", axes = "collect") & theme(legend.position = "bottom", 
+                                                                       axis.text.x = element_text(size = 12),
+                                                                       axis.title.x = element_text(size = 12),
+                                                                       legend.text = element_text(size = 12))
+  
+  
+  ggsave("./Maturity data processing/Figures/legacy_bioabund_CPT.png", width = 7, height = 8)
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
   

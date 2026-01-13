@@ -103,7 +103,7 @@ results <- data.frame()
 for(ii in 1:length(kk)){
   
   print(paste0("Fitting k=", kk[ii]))
-  mod <- sdmTMB(MATURE ~ s(SIZE_5MM, k = kk[ii]) + YEAR_F, #the 0 is there's a factor predictor for each YEAR, no intercept
+  mod <- sdmTMB(MATURE ~ s(SIZE_5MM, k = kk[ii]) + YEAR_F, 
                 spatial = "on",
                 spatiotemporal = "iid",
                 mesh = mat.msh,
@@ -154,7 +154,7 @@ tanner.chela$fold <- sample.int(n_folds, nrow(tanner.chela), replace = TRUE)
 mat.msh <- sdmTMB::make_mesh(mod.dat, c("LONGITUDE","LATITUDE"), n_knots = 200, type = "kmeans")
 
 mod.1 <- sdmTMB(
-  MATURE ~ s(SIZE_5MM, k = 10) + YEAR_F, #the 0 is there's a factor predictor for each YEAR, no intercept
+  MATURE ~ s(SIZE_5MM, k = 10) + YEAR_F, 
   spatial = "on",
   spatiotemporal = "iid",
   mesh = mat.msh,
@@ -167,7 +167,7 @@ mod.1 <- sdmTMB(
 saveRDS(mod.1, "./Maturity data processing/Doc/Tanner models/sdmTMB_nospVAR_k200.rda")
 
 cv.1 <- sdmTMB_cv(
-  MATURE ~ s(SIZE_5MM, k = 10) + YEAR_F, #the 0 is there's a factor predictor for each YEAR, no intercept
+  MATURE ~ s(SIZE_5MM, k = 10) + YEAR_F, 
   spatial = "on",
   spatiotemporal = "iid",
   mesh = mat.msh,
@@ -181,7 +181,7 @@ cv.1 <- sdmTMB_cv(
 )
 
 mod.2 <- sdmTMB(
-  MATURE ~ s(SIZE_5MM, k = 10) + YEAR_SCALED, #the 0 is there's a factor predictor for each YEAR, no intercept
+  MATURE ~ s(SIZE_5MM, k = 10) + YEAR_SCALED, 
   spatial = "on",
   spatiotemporal = "iid",
   mesh = mat.msh,
@@ -196,7 +196,7 @@ mod.2 <- sdmTMB(
 saveRDS(mod.2, "./Maturity data processing/Doc/Tanner models/sdmTMB_spVAR_SIZE_k200.rda")
 
 cv.2 <- sdmTMB_cv(
-  MATURE ~ s(SIZE_5MM, k = 10) + YEAR_SCALED, #the 0 is there's a factor predictor for each YEAR, no intercept
+  MATURE ~ s(SIZE_5MM, k = 10) + YEAR_SCALED, 
   spatial = "on",
   spatiotemporal = "iid",
   mesh = mat.msh,
@@ -212,7 +212,7 @@ cv.2 <- sdmTMB_cv(
 
 mat.msh <- sdmTMB::make_mesh(mod.dat, c("LONGITUDE","LATITUDE"), n_knots = 300, type = "kmeans")
 mod.3 <- sdmTMB(
-  MATURE ~ s(SIZE_5MM, k = 10) + YEAR_F, #the 0 is there's a factor predictor for each YEAR, no intercept
+  MATURE ~ s(SIZE_5MM, k = 10) + YEAR_F,
   spatial = "on",
   spatiotemporal = "iid",
   mesh = mat.msh,
@@ -226,7 +226,7 @@ mod.3 <- sdmTMB(
 saveRDS(mod.3, "./Maturity data processing/Doc/Tanner models/sdmTMB_nospVAR_k300.rda")
 
 cv.3 <- sdmTMB_cv(
-  MATURE ~ s(SIZE_5MM, k = 10) + YEAR_F, #the 0 is there's a factor predictor for each YEAR, no intercept
+  MATURE ~ s(SIZE_5MM, k = 10) + YEAR_F, 
   spatial = "on",
   spatiotemporal = "iid",
   mesh = mat.msh,
@@ -240,7 +240,7 @@ cv.3 <- sdmTMB_cv(
 )
 
 mod.4 <- sdmTMB(
-  MATURE ~ s(SIZE_5MM, k = 10) + YEAR_SCALED, #the 0 is there's a factor predictor for each YEAR, no intercept
+  MATURE ~ s(SIZE_5MM, k = 10) + YEAR_SCALED, 
   spatial = "on",
   spatiotemporal = "iid",
   mesh = mat.msh,
@@ -255,7 +255,7 @@ mod.4 <- sdmTMB(
 saveRDS(mod.4, "./Maturity data processing/Doc/Tanner models/sdmTMB_spVAR_SIZE_k300.rda")
 
 cv.4 <- sdmTMB_cv(
-  MATURE ~ s(SIZE_5MM, k = 10) + YEAR_SCALED, #the 0 is there's a factor predictor for each YEAR, no intercept
+  MATURE ~ s(SIZE_5MM, k = 10) + YEAR_SCALED, 
   spatial = "on",
   spatiotemporal = "iid",
   mesh = mat.msh,
