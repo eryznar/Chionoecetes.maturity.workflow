@@ -274,7 +274,7 @@ mod.4 <- sdmTMB(
 saveRDS(mod.4, "./Maturity data processing/Doc/Snow models/sdmTMB_spVAR_SIZE_k300.rda")
 
 cv.4 <- sdmTMB_cv(
-  MATURE ~ s(SIZE_5MM, k = 10) + YEAR_SCALED, 
+  MATURE ~ s(SIZE_5MM, k = 13) + YEAR_SCALED, 
   spatial = "on",
   spatiotemporal = "iid",
   mesh = mat.msh,
