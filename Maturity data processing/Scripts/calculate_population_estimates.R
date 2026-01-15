@@ -107,85 +107,131 @@ calc_maturepop_estimates <- function(model, crab_data, years, species){
     
     write.csv(SAM, paste0("./Maturity data processing/Output/", species, "_SAM.csv"))
     
-  # 5) Calculate mature biomass/abundance, combining model uncertainty with design-based expansion uncertainty ----
+  # 5) Calculate mature/immature biomass/abundance, combining model uncertainty with design-based expansion uncertainty ----
     nsim <- ncol(pmat.sim)
     bioabund.df <- data.frame()
 
     for(ii in 1:nsim){
       print(paste0("Calculating bioabund sim ", ii))
 
-      fit.sim <- pmat.sim[,1]
+      fit.sim <- pmat.sim[,ii]
 
       # replace PROP_MATURE with each model simulation draw
       crab_data$specimen <- cbind(sub1, fit.sim) %>%
         rename(PROP_MATURE = fit.sim) %>%
-        mutate(SAMPLING_FACTOR = SAMPLING_FACTOR * PROP_MATURE)
+        mutate(SAMPLING_FACTOR_MATURE = SAMPLING_FACTOR * PROP_MATURE,
+               SAMPLING_FACTOR_IMMATURE = SAMPLING_FACTOR - SAMPLING_FACTOR_MATURE)
 
       # calculate bioabund for each simulation
-      bioabund_sim <-  crabpack::calc_bioabund(crab_data = crab_data, species = species,
+      crab_data$specimen <- crab_data$specimen %>%
+        mutate(SAMPLING_FACTOR = SAMPLING_FACTOR_MATURE) # specifying sampling factor as mat_sf so crabpack recognizes
+      # Mature
+      bioabund_sim_mature <-  crabpack::calc_bioabund(crab_data = crab_data, species = species,
                                                            size_min = NULL, size_max = NULL,  sex = "male",
-                                                           shell_condition = "new_hardshell")
+                                                           shell_condition = "new_hardshell") %>%
+                              mutate(CATEGORY = "Mature male")
+      
+      # Immature
+      crab_data$specimen <- crab_data$specimen %>%
+        mutate(SAMPLING_FACTOR = SAMPLING_FACTOR_IMMATURE) # specifying sampling factor as mat_sf so crabpack recognizes
+      
+      bioabund_sim_immature <-  crabpack::calc_bioabund(crab_data = crab_data, species = species,
+                                                      size_min = NULL, size_max = NULL,  sex = "male",
+                                                      shell_condition = "new_hardshell") %>%
+                              mutate(CATEGORY = "Immature male")
 
       # Bind
+      bioabund_sim <- rbind(bioabund_sim_mature, bioabund_sim_immature)
+      
       bioabund.df <- rbind(bioabund.df,  bioabund_sim %>% mutate(sim = ii))
     }
 
-    # Now propagate both model and survey uncertainty into biomass/abundance via MC
-    n_mc <- 1000 # number of resamples per simulation
-    set.seed(1)
-
+    # Now propagate both model and survey uncertainty into biomass/abundance
     bioabund.df2 <-
       bioabund.df %>%
-      group_by(YEAR, SPECIES, DISTRICT) %>%
-      group_modify(~{
-        df <- .x
-        n_sim <- nrow(df)
-
-        abund_samples    <- numeric(n_sim * n_mc)
-        biom_mt_samples  <- numeric(n_sim * n_mc)
-        biom_lbs_samples <- numeric(n_sim * n_mc)
-
-        for (ii in seq_len(n_sim)) {
-
-          abundance_mean <- df$ABUNDANCE[ii]
-          abundance_sd   <- df$ABUNDANCE_CI[ii] / 1.96
-
-          biomass_mt_mean <- df$BIOMASS_MT[ii]
-          biomass_mt_sd   <- df$BIOMASS_MT_CI[ii] / 1.96
-
-          biomass_lbs_mean <- df$BIOMASS_LBS[ii]
-          biomass_lbs_sd   <- df$BIOMASS_LBS_CI[ii] / 1.96
-
-          idx <- ((ii - 1) * n_mc + 1):(ii * n_mc)
-
-          abund_samples[idx]    <- rnorm(n_mc, abundance_mean,    abundance_sd)
-          biom_mt_samples[idx]  <- rnorm(n_mc, biomass_mt_mean,  biomass_mt_sd)
-          biom_lbs_samples[idx] <- rnorm(n_mc, biomass_lbs_mean, biomass_lbs_sd)
-        }
-
-        tibble(
-          ABUNDANCE_MEAN = mean(abund_samples),
-          ABUNDANCE_SD   = sd(abund_samples),
-          ABUNDANCE_CI   = sd(abund_samples) * 1.96,
-          BIOMASS_MT_MEAN = mean(biom_mt_samples),
-          BIOMASS_MT_SD   = sd(biom_mt_samples),
-          BIOMASS_MT_CI   = sd(biom_mt_samples) * 1.96,
-          BIOMASS_LBS_MEAN = mean(biom_lbs_samples),
-          BIOMASS_LBS_SD   = sd(biom_lbs_samples),
-          BIOMASS_LBS_CI   = sd(biom_lbs_samples) * 1.96
-        )
-      }) %>%
-      ungroup() # this marginally increases the CI after incorporating model uncertainty
-
-    mature_bioabund <- bioabund.df2 %>%
-      dplyr::select(!c(ABUNDANCE_SD, BIOMASS_MT_SD, BIOMASS_LBS_SD)) %>%
-      rename(ABUNDANCE = ABUNDANCE_MEAN,
-             BIOMASS_MT = BIOMASS_MT_MEAN,
-             BIOMASS_LBS = BIOMASS_LBS_MEAN) %>%
-      right_join(., data.frame(YEAR = seq(min(.$YEAR), max(.$YEAR)))) %>%
-      mutate(Estimator = "sdmTMB",
-             ABUNDANCE = ABUNDANCE/1e6,
-             ABUNDANCE_CI = ABUNDANCE_CI/1e6)
+      group_by(YEAR, SPECIES, DISTRICT, CATEGORY) %>%
+      summarise(
+        NSIM = n(),
+        
+        ## Means across maturity draws
+        ABUNDANCE_MEAN    = mean(ABUNDANCE,   na.rm = TRUE),
+        BIOMASS_MT_MEAN   = mean(BIOMASS_MT,  na.rm = TRUE),
+        BIOMASS_LBS_MEAN  = mean(BIOMASS_LBS, na.rm = TRUE),
+        
+        ## Between-simulation variance (model uncertainty)
+        VAR_ABUNDANCE_between   = var(ABUNDANCE,   na.rm = TRUE),
+        VAR_BIOMASS_MT_between  = var(BIOMASS_MT,  na.rm = TRUE),
+        VAR_BIOMASS_LBS_between = var(BIOMASS_LBS, na.rm = TRUE),
+        
+        ## Within-simulation variance (survey design, from CIs)
+        VAR_ABUNDANCE_within   = mean( (ABUNDANCE_CI   / 1.96)^2, na.rm = TRUE ),
+        VAR_BIOMASS_MT_within  = mean( (BIOMASS_MT_CI  / 1.96)^2, na.rm = TRUE ),
+        VAR_BIOMASS_LBS_within = mean( (BIOMASS_LBS_CI / 1.96)^2, na.rm = TRUE ),
+        
+        ## Total variance = within + between
+        ABUNDANCE_VAR    = VAR_ABUNDANCE_within   + VAR_ABUNDANCE_between,
+        BIOMASS_MT_VAR   = VAR_BIOMASS_MT_within  + VAR_BIOMASS_MT_between,
+        BIOMASS_LBS_VAR  = VAR_BIOMASS_LBS_within + VAR_BIOMASS_LBS_between,
+        
+        ## SDs and 95% CIs
+        ABUNDANCE_SD     = sqrt(ABUNDANCE_VAR),
+        BIOMASS_MT_SD    = sqrt(BIOMASS_MT_VAR),
+        BIOMASS_LBS_SD   = sqrt(BIOMASS_LBS_VAR),
+        
+        ABUNDANCE_CI   = 1.96 * ABUNDANCE_SD,
+        BIOMASS_MT_CI  = 1.96 * BIOMASS_MT_SD,
+        BIOMASS_LBS_CI = 1.96 * BIOMASS_LBS_SD,
+        
+        .groups = "drop"
+      )
+    
+    mature_bioabund <-
+      bioabund.df2 %>%
+      dplyr::select(!c(VAR_ABUNDANCE_between, VAR_ABUNDANCE_within,
+                       VAR_BIOMASS_MT_between, VAR_BIOMASS_MT_within,
+                       VAR_BIOMASS_LBS_between, VAR_BIOMASS_LBS_within,
+                       ABUNDANCE_VAR, BIOMASS_MT_VAR, BIOMASS_LBS_VAR,
+                       ABUNDANCE_SD, BIOMASS_MT_SD, BIOMASS_LBS_SD)) %>%
+                      rename(ABUNDANCE      = ABUNDANCE_MEAN,
+                             BIOMASS_MT     = BIOMASS_MT_MEAN,
+                             BIOMASS_LBS    = BIOMASS_LBS_MEAN) %>%
+                      right_join(expand.grid(YEAR     = seq(min(.$YEAR), max(.$YEAR)), CATEGORY = c("Mature male", "Immature male"))) %>%
+                      mutate(Estimator     = "sdmTMB",
+                             ABUNDANCE     = ABUNDANCE    / 1e6,
+                             ABUNDANCE_CI  = ABUNDANCE_CI / 1e6) %>%
+      mutate(
+        # Assign NAs for years with no snow chela data
+        ABUNDANCE = case_when(YEAR %in% c(2008, 2012, 2014, 2016, 2020) & SPECIES == "SNOW" ~ NA,
+                              TRUE ~ ABUNDANCE),
+        ABUNDANCE_CI = case_when(YEAR %in% c(2008, 2012, 2014, 2016, 2020)  & SPECIES == "SNOW" ~ NA,
+                                 TRUE ~ ABUNDANCE_CI),
+        BIOMASS_MT = case_when(YEAR %in% c(2008, 2012, 2014, 2016, 2020) & SPECIES == "SNOW" ~ NA,
+                               TRUE ~ BIOMASS_MT),
+        BIOMASS_MT_CI = case_when(YEAR %in% c(2008, 2012, 2014, 2016, 2020)  & SPECIES == "SNOW" ~ NA,
+                                  TRUE ~ BIOMASS_MT_CI),
+        BIOMASS_LBS = case_when(YEAR %in% c(2008, 2012, 2014, 2016, 2020)  & SPECIES == "SNOW" ~ NA,
+                                TRUE ~ BIOMASS_LBS),
+        BIOMASS_LBS_CI = case_when(YEAR %in% c(2008, 2012, 2014, 2016, 2020) & SPECIES == "SNOW" ~ NA,
+                                   TRUE ~ BIOMASS_LBS_CI),
+        # Assign NAs for years with no Tanner data by district
+        ABUNDANCE = case_when(YEAR %in% c(2011, 2013, 2015, 2020) & SPECIES == "TANNER" & DISTRICT == "E166" ~ NA,
+                              YEAR %in% c(2013, 2015, 2020) & SPECIES == "TANNER" & DISTRICT == "W166" ~ NA,
+                              TRUE ~ ABUNDANCE),
+        ABUNDANCE_CI = case_when(YEAR %in% c(2011, 2013, 2015, 2020) & SPECIES == "TANNER" & DISTRICT == "E166" ~ NA,
+                                 YEAR %in% c(2013, 2015, 2020) & SPECIES == "TANNER" & DISTRICT == "W166" ~ NA,
+                                 TRUE ~ ABUNDANCE_CI),
+        BIOMASS_MT = case_when(YEAR %in% c(2011, 2013, 2015, 2020) & SPECIES == "TANNER" & DISTRICT == "E166" ~ NA,
+                               YEAR %in% c(2013, 2015, 2020) & SPECIES == "TANNER" & DISTRICT == "W166" ~ NA,
+                               TRUE ~ BIOMASS_MT),
+        BIOMASS_MT_CI = case_when(YEAR %in% c(2011, 2013, 2015, 2020) & SPECIES == "TANNER" & DISTRICT == "E166" ~ NA,
+                                  YEAR %in% c(2013, 2015, 2020) & SPECIES == "TANNER" & DISTRICT == "W166" ~ NA,
+                                  TRUE ~ BIOMASS_MT_CI),
+        BIOMASS_LBS = case_when(YEAR %in% c(2011, 2013, 2015, 2020) & SPECIES == "TANNER" & DISTRICT == "E166" ~ NA,
+                                YEAR %in% c(2013, 2015, 2020) & SPECIES == "TANNER" & DISTRICT == "W166" ~ NA,
+                                TRUE ~ BIOMASS_LBS),
+        BIOMASS_LBS_CI = case_when(YEAR %in% c(2011, 2013, 2015, 2020) & SPECIES == "TANNER" & DISTRICT == "E166" ~ NA,
+                                   YEAR %in% c(2013, 2015, 2020) & SPECIES == "TANNER" & DISTRICT == "W166" ~ NA,
+                                   TRUE ~ BIOMASS_LBS_CI))
 
     write.csv(mature_bioabund, paste0("./Maturity data processing/Output/", species, "_maturebioabund.csv"))
     
@@ -233,7 +279,7 @@ calc_maturepop_estimates <- function(model, crab_data, years, species){
     geom_hline(yintercept = 0.5, linetype = "dashed")+
     theme_bw()+
     xlim(0, 150)+
-    ggtitle("Snow crab")+
+    ggtitle("Snow")+
     #scale_x_continuous(breaks = seq(0, 175, by = 10))+
     ylab("Proportion mature")+
     xlab("Carapace width (mm)")+
@@ -253,7 +299,7 @@ calc_maturepop_estimates <- function(model, crab_data, years, species){
     #facet_wrap(~YEAR)+
     geom_hline(yintercept = 0.5, linetype = "dashed")+
     theme_bw()+
-    ggtitle("Snow crab")+
+    ggtitle("Snow")+
     #scale_x_continuous(breaks = seq(0, 175, by = 10))+
     ylab("Probability mature")+
     xlab("Carapace width (mm)")+
@@ -285,7 +331,7 @@ calc_maturepop_estimates <- function(model, crab_data, years, species){
     scale_color_manual(values = c("darkgoldenrod", "cadetblue"), labels = c("Legacy", "sdmTMB"), name = "")+
     scale_fill_manual(values = c("darkgoldenrod", "cadetblue"), labels = c("Legacy", "sdmTMB"), name = "")+
     theme_bw()+
-    ggtitle("Snow crab")+
+    ggtitle("Snow")+
     xlab("Year")+
     ylab("Size at 50% maturity (mm)")+
     theme(legend.position = "bottom", legend.direction = "horizontal",
@@ -303,7 +349,7 @@ calc_maturepop_estimates <- function(model, crab_data, years, species){
     scale_color_manual(values = c("darkgoldenrod"), labels = c("Legacy"), name = "")+
     scale_fill_manual(values = c("darkgoldenrod"), labels = c("Legacy"), name = "")+
     theme_bw()+
-    ggtitle("Snow SAM")+
+    ggtitle("Snow")+
     xlab("Year")+
     ylab("Size at 50% maturity (mm)")+
     theme(legend.position = "bottom", legend.direction = "horizontal",
@@ -314,7 +360,13 @@ calc_maturepop_estimates <- function(model, crab_data, years, species){
   
   # MATURE BIOMASS/ABUNDANCE ----
   # sdmTMB
-  snow_sdmTMB_bioabund <- snow.out$mature_bioabund
+  snow_sdmTMB_bioabund <- snow.out$mature_bioabund %>% 
+                    dplyr::select(!NSIM)
+  
+  ggplot(snow_sdmTMB_bioabund %>% filter(YEAR >= 1990), aes(YEAR, ABUNDANCE))+
+    geom_point()+
+    geom_line()+
+    facet_wrap(~CATEGORY)
   
   # Legacy
   snow_legacy_spec <- snow_dat
@@ -347,22 +399,9 @@ calc_maturepop_estimates <- function(model, crab_data, years, species){
  
   # Bind and specify missing years
   snow_bioabund_dat <- rbind(snow_legacy_bioabund%>%
-                               dplyr::select(names(.)[names(.) %in% colnames(snow_sdmTMB_bioabund)]), snow_sdmTMB_bioabund) %>%
-    filter(YEAR >= 1989) %>%
-    mutate(
-      ABUNDANCE = case_when(YEAR %in% c(2008, 2012, 2014, 2016, 2020) ~ NA,
-                            TRUE ~ ABUNDANCE),
-      ABUNDANCE_CI = case_when(YEAR %in% c(2008, 2012, 2014, 2016, 2020) ~ NA,
-                               TRUE ~ ABUNDANCE_CI),
-      BIOMASS_MT = case_when(YEAR %in% c(2008, 2012, 2014, 2016, 2020) ~ NA,
-                             TRUE ~ BIOMASS_MT),
-      BIOMASS_MT_CI = case_when(YEAR %in% c(2008, 2012, 2014, 2016, 2020) ~ NA,
-                                TRUE ~ BIOMASS_MT_CI),
-      BIOMASS_LBS = case_when(YEAR %in% c(2008, 2012, 2014, 2016, 2020) ~ NA,
-                              TRUE ~ BIOMASS_LBS),
-      BIOMASS_LBS_CI = case_when(YEAR %in% c(2008, 2012, 2014, 2016, 2020) ~ NA,
-                                 TRUE ~ BIOMASS_LBS_CI)) %>%
-    arrange(Estimator, YEAR)
+                               mutate(CATEGORY = "Mature male") %>%
+                               dplyr::select(names(.)[names(.) %in% colnames(snow_sdmTMB_bioabund)]), 
+                             snow_sdmTMB_bioabund %>% filter(CATEGORY == "Mature male"))
   
   # Plot
   p1 <- ggplot()+
@@ -376,7 +415,7 @@ calc_maturepop_estimates <- function(model, crab_data, years, species){
     scale_fill_manual(values = c("darkgoldenrod", "cadetblue"), name = "")+
     theme_bw()+
     ylab("Abundance (millions)")+
-    ggtitle("Snow crab")+
+    ggtitle("Snow")+
     xlab("Year")+
     theme(
           axis.text.y = element_text(size = 12), 
@@ -688,26 +727,7 @@ calc_maturepop_estimates <- function(model, crab_data, years, species){
   
   # Bind and specify missing years
   tanner_bioabund_dat <- rbind(tanner_legacy_bioabund%>%
-                            dplyr::select(names(.)[names(.) %in% colnames(tanner_sdmTMB_bioabund)]), tanner_sdmTMB_bioabund) %>%
-                          filter(YEAR >= 1990) %>%
-    mutate(ABUNDANCE = case_when(YEAR %in% c(2011, 2013, 2015, 2020) & DISTRICT == "E166" ~ NA,
-                            YEAR %in% c(2013, 2015, 2020) & DISTRICT == "W166" ~ NA,
-                            TRUE ~ ABUNDANCE),
-            ABUNDANCE_CI = case_when(YEAR %in% c(2011, 2013, 2015, 2020) & DISTRICT == "E166" ~ NA,
-                                     YEAR %in% c(2013, 2015, 2020) & DISTRICT == "W166" ~ NA,
-                                     TRUE ~ ABUNDANCE_CI),
-            BIOMASS_MT = case_when(YEAR %in% c(2011, 2013, 2015, 2020) & DISTRICT == "E166" ~ NA,
-                                   YEAR %in% c(2013, 2015, 2020) & DISTRICT == "W166" ~ NA,
-                                   TRUE ~ BIOMASS_MT),
-            BIOMASS_MT_CI = case_when(YEAR %in% c(2011, 2013, 2015, 2020) & DISTRICT == "E166" ~ NA,
-                                      YEAR %in% c(2013, 2015, 2020) & DISTRICT == "W166" ~ NA,
-                                      TRUE ~ BIOMASS_MT_CI),
-            BIOMASS_LBS = case_when(YEAR %in% c(2011, 2013, 2015, 2020) & DISTRICT == "E166" ~ NA,
-                                    YEAR %in% c(2013, 2015, 2020) & DISTRICT == "W166" ~ NA,
-                                    TRUE ~ BIOMASS_LBS),
-            BIOMASS_LBS_CI = case_when(YEAR %in% c(2011, 2013, 2015, 2020) & DISTRICT == "E166" ~ NA,
-                                       YEAR %in% c(2013, 2015, 2020) & DISTRICT == "W166" ~ NA,
-                                       TRUE ~ BIOMASS_LBS_CI))
+                            dplyr::select(names(.)[names(.) %in% colnames(tanner_sdmTMB_bioabund)]), tanner_sdmTMB_bioabund)
   
   # Plot
   e1 <- ggplot(tanner_bioabund_dat %>% filter(DISTRICT == "E166"), aes(YEAR, ABUNDANCE))+
@@ -817,7 +837,7 @@ calc_maturepop_estimates <- function(model, crab_data, years, species){
     scale_fill_manual(values = c("darkgoldenrod", "cadetblue"), name = "")+
     theme_bw()+
     ylab("Abundance (millions)")+
-    ggtitle("Snow morphometric mature males (newshell)")+
+    ggtitle("Snow")+
     xlab("Year")+
     theme(axis.text.y = element_text(size = 12), 
           axis.title.y = element_text(size = 12),
