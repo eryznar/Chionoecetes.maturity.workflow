@@ -73,23 +73,11 @@ snow.chela <-  read.csv("./Maturity data processing/Data/snow_tanner_cheladataba
                             TRUE ~ MATURE)) %>%
   as.data.frame(.) %>%
   rename(SIZE_5MM = SIZE_BINNED) %>%
-  dplyr::select(YEAR, YEAR_F, YEAR_SCALED, STATION_ID, LATITUDE, LONGITUDE, SIZE_5MM, SIZE_CATEGORY, MATURE) %>%
+  dplyr::select(YEAR, YEAR_F, YEAR_SCALED, STATION_ID, LATITUDE, LONGITUDE, SIZE, SIZE_5MM, SIZE_CATEGORY, MATURE) %>%
   filter(YEAR != 2012)
 
 mod.dat <- snow.chela
 
-ggplot(pp %>% filter(YEAR != 2012), aes(LN_CW, LN_CH, color = as.factor(MATURE)))+
-  geom_point(alpha= 0.25)+
-  facet_wrap(~YEAR)+
-  theme_bw()+
-  scale_color_manual(values = c("1" = "salmon", "0" = "cyan3"), name = "MATURE")+
-  geom_abline(
-    intercept = BETA0,
-    slope = BETA1,
-    linetype = "dashed",
-    colour = "black"
-  ) +
-  theme(strip.text = element_text(size = 12))
 
 # Fit models with year fixed effect and smooth for size ----
 # Make mesh
@@ -337,3 +325,26 @@ sanity(mod.4)
 
 
 
+
+# Fit best model but without 5mm size bin ----
+set.seed(1)
+
+# Set params
+mat.msh <- sdmTMB::make_mesh(mod.dat, c("LONGITUDE","LATITUDE"), n_knots = 300, type = "kmeans")
+
+xtra.time <- c(2008, 2012, 2014, 2016, 2020) # missing years across all size bins
+
+mod.2 <- sdmTMB(
+  MATURE ~ s(SIZE, k = 13) + YEAR_SCALED, 
+  spatial = "on",
+  spatiotemporal = "iid",
+  mesh = mat.msh,
+  family = binomial(),
+  time = "YEAR",
+  spatial_varying = ~ 0 + SIZE,
+  extra_time = xtra.time,
+  anisotropy = TRUE,
+  data = mod.dat
+)
+
+saveRDS(mod.2, "./Maturity data processing/Doc/Snow models/sdmTMB_spVAR_noBIN_k300.rda")

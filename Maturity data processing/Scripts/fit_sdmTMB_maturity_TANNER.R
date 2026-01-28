@@ -70,7 +70,7 @@ tanner.chela <-  read.csv("./Maturity data processing/Data/snow_tanner_cheladata
                             TRUE ~ MATURE)) %>%
   as.data.frame(.) %>%
   rename(SIZE_5MM = SIZE_BINNED) %>%
-  dplyr::select(YEAR, DISTRICT, YEAR_F, YEAR_SCALED, STATION_ID, LATITUDE, LONGITUDE, SIZE_5MM, SIZE_CATEGORY, MATURE) 
+  dplyr::select(YEAR, DISTRICT, YEAR_F, YEAR_SCALED, STATION_ID, LATITUDE, LONGITUDE, SIZE, SIZE_5MM, SIZE_CATEGORY, MATURE) 
 
 tanner.chela %>% dplyr::select(YEAR, DISTRICT, LATITUDE, LONGITUDE) %>% distinct() -> rr
 ggplot(rr, aes(LONGITUDE, LATITUDE, color = DISTRICT))+
@@ -296,3 +296,26 @@ sanity(mod.3)
 sanity(mod.4)
 
 
+
+# Fit best model but without 5mm size bin ----
+set.seed(1)
+mod.dat <- tanner.chela
+# Set params
+mat.msh <- sdmTMB::make_mesh(mod.dat, c("LONGITUDE","LATITUDE"), n_knots = 200, type = "kmeans")
+# Extra time
+xtra.time <- c(2013, 2015, 2020) # missing years across all size bins
+
+mod.2 <- sdmTMB(
+  MATURE ~ s(SIZE, k = 10) + YEAR_SCALED, 
+  spatial = "on",
+  spatiotemporal = "iid",
+  mesh = mat.msh,
+  family = binomial(),
+  time = "YEAR",
+  spatial_varying = ~ 0 + SIZE,
+  extra_time = xtra.time,
+  anisotropy = TRUE,
+  data = mod.dat
+)
+
+saveRDS(mod.2, "./Maturity data processing/Doc/Tanner models/sdmTMB_spVAR_noBIN_k200.rda")

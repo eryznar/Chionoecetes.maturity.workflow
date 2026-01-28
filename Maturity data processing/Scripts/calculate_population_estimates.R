@@ -13,7 +13,8 @@ source("./Maturity data processing/Scripts/calc_maturepop_estimates_function.R")
 
 # SNOW CRAB ----
   # Specify function parameters ----
-  snow_mod <- readRDS("./Maturity data processing/Doc/Snow models/sdmTMB_spVAR_SIZE_k300.rda")
+  #snow_mod <- readRDS("./Maturity data processing/Doc/Snow models/sdmTMB_spVAR_SIZE_k300.rda")
+  snow_mod <- readRDS("./Maturity data processing/Doc/Snow models/sdmTMB_spVAR_noBIN_k300.rda")
   snow_dat <- readRDS("./Maturity data processing/Data/snow_survey_specimenEBS.rda")
   snow_yrs <- c(1989:2019, 2021:2025)
   species <- "SNOW"
@@ -27,6 +28,14 @@ source("./Maturity data processing/Scripts/calc_maturepop_estimates_function.R")
   snow_ogive_sdmTMB <- snow.out$ogives %>%
     mutate(Estimator = "sdmTMB") %>%
     dplyr::select(YEAR, SIZE_5MM, SPECIES, DISTRICT, PROP_MATURE_mean, PROP_MATURE_lo, PROP_MATURE_hi, Estimator)
+  
+  snow_ogive_sdmTMB <- read.csv("./Maturity data processing/Output/SNOW_maleogives.csv") %>%
+    mutate(Estimator = "sdmTMB") %>%
+    dplyr::select(YEAR, SIZE_5MM, SPECIES, DISTRICT, PROP_MATURE_mean, PROP_MATURE_lo, PROP_MATURE_hi, Estimator) %>%
+    mutate(PROP_MATURE_hi = case_when(PROP_MATURE_hi > 1 ~ 1,
+                                      TRUE ~ PROP_MATURE_hi),
+           PROP_MATURE_lo = case_when(PROP_MATURE_lo <0 ~ 0, 
+                                      TRUE ~ PROP_MATURE_lo))
   
   # legacy using gam prop_mature interpolation of 10mm down to 5mm bins
   snow_legacy_ogives <- read.csv("./Maturity data processing/Doc/snow_pmat_5mminterp.csv") %>%
@@ -202,20 +211,30 @@ source("./Maturity data processing/Scripts/calc_maturepop_estimates_function.R")
   
 # TANNER CRAB ----
   # Specify function parameters ----
-  tanner_mod <- readRDS("./Maturity data processing/Doc/Tanner models/sdmTMB_spVAR_SIZE_k200.rda")
+  #tanner_mod <- readRDS("./Maturity data processing/Doc/Tanner models/sdmTMB_spVAR_SIZE_k200.rda")
+  tanner_mod <- readRDS("./Maturity data processing/Doc/Tanner models/sdmTMB_spVAR_noBIN_k200.rda")
   tanner_dat <- readRDS("./Maturity data processing/Data/tanner_survey_specimenEBS.rda")
   tanner_yrs <- c(1990:2019, 2021:2025)
   species <- "TANNER"
   output <- NULL
 
   # Run function ----
-  calc_maturepop_estimates(tanner_mod, tanner_dat, tanner_yrs, species, c("bioabund")) -> tanner.out
+  calc_maturepop_estimates(tanner_mod, tanner_dat, tanner_yrs, species, output) -> tanner.out
+ 
   
   # OGIVES ----
   # sdmTMB
   tanner_ogive_sdmTMB <- tanner.out$ogives %>%
     mutate(Estimator = "sdmTMB") %>%
     dplyr::select(YEAR, SIZE_5MM, SPECIES, DISTRICT, PROP_MATURE_mean, PROP_MATURE_lo, PROP_MATURE_hi, Estimator)
+  
+   tanner_ogive_sdmTMB <- read.csv("./Maturity data processing/Output/TANNER_maleogives.csv") %>%
+    mutate(Estimator = "sdmTMB") %>%
+    dplyr::select(YEAR, SIZE_5MM, SPECIES, DISTRICT, PROP_MATURE_mean, PROP_MATURE_lo, PROP_MATURE_hi, Estimator) %>%
+    mutate(PROP_MATURE_hi = case_when(PROP_MATURE_hi > 1 ~ 1,
+                                      TRUE ~ PROP_MATURE_hi),
+           PROP_MATURE_lo = case_when(PROP_MATURE_lo <0 ~ 0, 
+                                      TRUE ~ PROP_MATURE_lo))
   
   # legacy using gam prop_mature interpolation of 10mm down to 5mm bins
   tanner_legacy_ogives <- rbind(read.csv("./Maturity data processing/Doc/tanE_pmat_5mminterp.csv") %>% mutate(DISTRICT = "E166"),

@@ -33,6 +33,8 @@ calc_maturepop_estimates <- function(model, crab_data, years, species, output){
            LONGITUDE = X/1000) %>%
     filter(YEAR %in% unique(model$data$YEAR)) -> sub1
   
+  species <- unique(sub1$SPECIES)
+  
   # Specify if output = "", all outputs are produced
   all_opts <- c("ogives", "SAM", "cpue", "bioabund")
   if (missing(output) || is.null(output)) {
@@ -196,6 +198,8 @@ calc_maturepop_estimates <- function(model, crab_data, years, species, output){
       )
     
     outputs$ogives <- ogives
+    #write.csv(ogives, paste0("./Maturity data processing/Output/", species, "_maleogives.csv"))
+    
   }
   
   ## SAM summary
@@ -215,6 +219,7 @@ calc_maturepop_estimates <- function(model, crab_data, years, species, output){
                  by = "YEAR")
     
     outputs$SAM <- SAM
+    #write.csv(SAM, paste0("./Maturity data processing/Output/", species, "_maleSAM.csv"))
   }
 } # close "if" statement for SAM and ogives
 
@@ -333,7 +338,7 @@ calc_maturepop_estimates <- function(model, crab_data, years, species, output){
     
     outputs$mature_cpue <- mature_cpue
     
-    #write.csv(mature_cpue, paste0("./Maturity data processing/Output/", species, "_maturecpue.csv"))
+    #write.csv(mature_cpue, paste0("./Maturity data processing/Output/", species, "_maturemalecpue.csv"))
   }
  
  # BIOMASS/ABUNDANCE ----
@@ -464,7 +469,7 @@ calc_maturepop_estimates <- function(model, crab_data, years, species, output){
                                  TRUE ~ BIOMASS_LBS_CI))
   
   outputs$mature_bioabund <- mature_bioabund
-  #write.csv(mature_bioabund, paste0("./Maturity data processing/Output/", species, "_maturebioabund.csv"))
+  #write.csv(mature_bioabund, paste0("./Maturity data processing/Output/", species, "_maturemalebioabund.csv"))
   }
   
  # RETURN OUTPUTS ----
