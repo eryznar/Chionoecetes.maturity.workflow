@@ -113,11 +113,12 @@ write.csv(ogive_mat, "./Maturity data processing/Output/SNOW_male_pmolt_array.cs
 
 ggplot()+
   scale_y_continuous(breaks = seq(0, 1, by = 0.25))+
-  geom_ribbon(snow.ogives, mapping = aes(SIZE_5MM, ymin = PROP_MATURE_lo, ymax = PROP_MATURE_hi), alpha = 0.5, color = NA, fill = "cadetblue")+
-  geom_line(snow.ogives, mapping = aes(SIZE_5MM, PROP_MATURE_mean), color = "cadetblue", linewidth = 1)+
+  geom_ribbon(snow.ogives, mapping = aes(SIZE_5MM, ymin = PROP_MATURE_lo, ymax = PROP_MATURE_hi), alpha = 0.35, color = NA, fill = "cadetblue")+
+  geom_line(snow.ogives, mapping = aes(SIZE_5MM, PROP_MATURE_mean), color = "cadetblue")+
   geom_hline(yintercept = 0.5, linetype = "dashed")+
   facet_wrap(~YEAR)+
-  theme_bw()
+  theme_bw()+
+  xlim(c(0, 150))
 
 ggplot(snow.out$SAM, aes(YEAR, SAM_mean))+
   geom_point()+
