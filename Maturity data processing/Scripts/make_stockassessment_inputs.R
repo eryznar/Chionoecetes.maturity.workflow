@@ -1,4 +1,4 @@
-# PURPOSE: to generate maturity outputs for stock assessment models
+# PURPOSE: to generate maturity inputs for stock assessment models
 
 # Author: Emily Ryznar
 
@@ -42,18 +42,7 @@ t.out$ogives %>%
                 NUM_MATURE, TOTAL_CRAB, PROP_MATURE_mean, PROP_MATURE_sd) %>%
   rename(PROP_MATURE = PROP_MATURE_mean, PROP_MATURE_SD = PROP_MATURE_sd, SIZE_BIN = SIZE_5MM) %>%
   filter(!YEAR %in% c(2008, 2012, 2014, 2016)) -> for.buck
-  # #%>%
-  # arrange(SIZE_BIN, YEAR) %>%
-  # mutate(PROP_MATURE = case_when(SIZE_BIN <=50 ~ 0,
-  #                                SIZE_BIN >=150 ~ 1,
-  #                                TRUE ~ PROP_MATURE),
-  #        NUM_MATURE = case_when(SIZE_BIN <= 50 ~ 0,
-  #                               SIZE_BIN >=150 ~ 1,
-  #                               TRUE ~ NUM_MATURE),
-  #        NUM_IMMATURE = case_when(NUM_MATURE == 0 ~ TOTAL_CRAB,
-  #                                 TRUE ~ NUM_IMMATURE),
-  #        PROP_MATURE_SD = case_when(PROP_MATURE == 0 ~ NA,
-  #                                   TRUE ~ PROP_MATURE_SD))  # omitting years with no maturity data
+  
 
 write.csv(for.buck, "./Maturity data processing/Output/TANNER_male_mat_ratio.csv")
 
@@ -99,11 +88,7 @@ saveRDS(snow.out, "./Maturity data processing/Output/snow.outputforCody.rda")
 
 snow.ogives <- snow.out$ogives %>%
                     filter(!YEAR %in% c(2008, 2012, 2014, 2016, 2020), # omitting no maturity years
-                           SIZE_5MM < 172.5) # filtering large Tanner crab classified as snow
-  # dplyr::select(SPECIES, REGION, DISTRICT, YEAR, NUM_IMMATURE, 
-  #               NUM_MATURE, TOTAL_CRAB, SIZE_5MM, PROP_MATURE_mean) %>%
-  # rename(PROP_MATURE = PROP_MATURE_mean) %>%
-  #  
+                           SIZE_5MM < 172.5) # filtering large Tanner crab classified as snow in 2025
 
 for.cody <- snow.ogives %>%
   filter(SIZE_5MM >= 27.5 & SIZE_5MM <= 132.5) %>%

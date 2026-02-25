@@ -17,7 +17,7 @@ calc_maturepop_estimates <- function(model, crab_data, years, species, region, d
   crab_data$specimen %>%
     mutate(DISTRICT = case_when((species == "TANNER" & region == "EBS" & district == "ALL") ~ "ALL", # mutating district = all for tanner
                                 TRUE  ~ DISTRICT)) %>%
-    filter(YEAR %in% years, REGION == region, SPECIES == species, SHELL_CONDITION == 2, SEX == 1) %>%
+    filter(REGION == region, SPECIES == species, SHELL_CONDITION == 2, SEX == 1, !(YEAR == 2025 & SPECIES == "SNOW" & SIZE == 172.5)) %>% # filtering tanner classified as snow
     mutate(BIN_5MM = cut_width(SIZE_1MM, width = 5, center = 2.5, closed = "left", dig.lab = 4),
            BIN2 = BIN_5MM) %>%
     separate(BIN2, sep = ",", into = c("LOWER", "UPPER")) %>%

@@ -13,7 +13,6 @@ source("./Maturity data processing/Scripts/calc_maturepop_estimates_function.R")
 
 # SNOW CRAB ----
   # Specify function parameters ----
-  #snow_mod <- readRDS("./Maturity data processing/Doc/Snow models/sdmTMB_spVAR_SIZE_k300.rda")
   snow_mod <- readRDS("./Maturity data processing/Doc/Snow models/sdmTMB_spVAR_noBIN_k300.rda")
   snow_dat <- readRDS("./Maturity data processing/Data/snow_survey_specimenEBS.rda")
   snow_yrs <- c(1989:2019, 2021:2025)
