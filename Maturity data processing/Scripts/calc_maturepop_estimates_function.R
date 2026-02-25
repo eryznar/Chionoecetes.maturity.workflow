@@ -7,7 +7,7 @@
 
 # CREATE FUNCTION ----
 # Create function to simulate from sdmTMB model, and calculate ogives, SAM, and mature bioabund with uncertainty
-calc_maturepop_estimates <- function(model, crab_data, years, species, output){
+calc_maturepop_estimates <- function(model, crab_data, years, species, region, district, size_1mm, output){
   
   # list to store all requested outputs
   outputs <- list()
@@ -15,7 +15,9 @@ calc_maturepop_estimates <- function(model, crab_data, years, species, output){
   
   # filter specimen data by year and transform to sdmTMB coordinates
   crab_data$specimen %>%
-    filter(YEAR %in% years, SPECIES == species, SHELL_CONDITION == 2, SEX == 1) %>%
+    mutate(DISTRICT = case_when((species == "TANNER" & region == "EBS" & district == "ALL") ~ "ALL", # mutating district = all for tanner
+                                TRUE  ~ DISTRICT)) %>%
+    filter(YEAR %in% years, REGION == region, SPECIES == species, SHELL_CONDITION == 2, SEX == 1) %>%
     mutate(BIN_5MM = cut_width(SIZE_1MM, width = 5, center = 2.5, closed = "left", dig.lab = 4),
            BIN2 = BIN_5MM) %>%
     separate(BIN2, sep = ",", into = c("LOWER", "UPPER")) %>%
@@ -51,30 +53,33 @@ calc_maturepop_estimates <- function(model, crab_data, years, species, output){
   
   gc()
   
+  
  # OGIVES/SAM ----
   if(any(c("ogives", "SAM") %in% output)){
   # Calculate haul_level variability for abundance-at-size (SAMPLING FACTOR) to account for its variance below
   SF_var <- sub1 %>%
-    group_by(YEAR, DISTRICT, SIZE_5MM, STATION_ID) %>%
+    group_by(YEAR, REGION, DISTRICT, SIZE_5MM, STATION_ID) %>%
     summarise(
       SF_haul = sum(SAMPLING_FACTOR, na.rm = TRUE),  # haul-level SF at size
     ) %>%
-    group_by(YEAR, DISTRICT, SIZE_5MM) %>%
+    group_by(YEAR, REGION, DISTRICT, SIZE_5MM) %>%
     summarise(
       SF_mean = mean(SF_haul, na.rm = TRUE),
+      SF_sum = sum(SF_haul, na.rm = TRUE),
       SF_sd   = sd(SF_haul,   na.rm = TRUE),
       n_hauls = n()
     ) %>%
     mutate(
       SF_mean = replace_na(SF_mean, 0), # Make sure SF_mean/SF_sd don’t become NA for single or empty groupings:
-      SF_sd   = replace_na(SF_sd, 0)
+      SF_sd   = replace_na(SF_sd, 0),
+      SF_sum = replace_na(SF_sum, 0)
     )
   
   # Attach SF_mean / SF_sd back to the row-level data (sub1) and set the working SAMPLING_FACTOR equal to the mean
   sub1_sf <- sub1 %>%
     left_join(
       SF_var,
-      by = c("YEAR", "DISTRICT", "SIZE_5MM")
+      by = c("YEAR", "REGION", "DISTRICT", "SIZE_5MM")
     ) %>%
     mutate(
       # Replace (or define) SAMPLING_FACTOR as the mean haul-level SF for that YEAR × DISTRICT × SIZE_5MM
@@ -142,7 +147,7 @@ calc_maturepop_estimates <- function(model, crab_data, years, species, output){
       # Compute SF-weighted ogive for SF draw b
       ogive_b <- sub1_sf %>%
         mutate(pmat = pmat_s, SF_draw = sf_draw) %>%
-        group_by(YEAR, SPECIES, DISTRICT, SIZE_5MM) %>%
+        group_by(YEAR, SPECIES,REGION, DISTRICT, SIZE_5MM) %>%
         summarise(
           denom = sum(SF_draw),
           num   = sum(pmat * SF_draw),
@@ -155,7 +160,7 @@ calc_maturepop_estimates <- function(model, crab_data, years, species, output){
       
       # Compute SAM for SF draw b
       SAM_b <- ogive_b %>%
-        group_by(YEAR, SPECIES, DISTRICT) %>%
+        group_by(YEAR, SPECIES, REGION, DISTRICT) %>%
         summarise(
           SAM = get_sam(SIZE_5MM, p_b),
           .groups = "drop"
@@ -176,30 +181,51 @@ calc_maturepop_estimates <- function(model, crab_data, years, species, output){
   # Bind across all sdmTMB simulations
   ogive_all <- bind_rows(ogive_draws_list)
   SAM_all   <- bind_rows(SAM_draws_list)
-  
-  ## Ogive summary
   if ("ogives" %in% output) {
     message("Summarizing ogives")
     
     ogives <- ogive_all %>%
-      group_by(YEAR, SPECIES, DISTRICT, SIZE_5MM) %>%
+      group_by(YEAR, SPECIES, REGION, DISTRICT, SIZE_5MM) %>%
       summarise(
         PROP_MATURE_mean = mean(p_b, na.rm = TRUE),
         VAR_total        = var(p_b,  na.rm = TRUE),
         .groups = "drop"
       ) %>%
       mutate(
-        # if all draws were NA, set maturity to 0 rather than NaN
+        # handle NaNs and negative variances
         PROP_MATURE_mean = ifelse(is.nan(PROP_MATURE_mean), 0, PROP_MATURE_mean),
         VAR_total        = replace_na(VAR_total, 0),
+        VAR_total        = pmax(VAR_total, 0),
         PROP_MATURE_sd   = sqrt(VAR_total),
-        PROP_MATURE_lo   = PROP_MATURE_mean - 1.96 * PROP_MATURE_sd,
-        PROP_MATURE_hi   = PROP_MATURE_mean + 1.96 * PROP_MATURE_sd
+        
+        # cap mean in [0,1]
+        PROP_MATURE_mean = pmin(pmax(PROP_MATURE_mean, 0), 1),
+        
+        # raw CI
+        hi_raw = PROP_MATURE_mean + 1.96 * PROP_MATURE_sd,
+        lo_raw = PROP_MATURE_mean - 1.96 * PROP_MATURE_sd,
+        
+        # truncate CI to [0,1]
+        PROP_MATURE_hi = pmin(1, hi_raw),
+        PROP_MATURE_lo = pmax(0, lo_raw),
+        
+        # back-calculate SD from truncated upper CI so mean + 1.96*sd <= 1
+        PROP_MATURE_sd = (PROP_MATURE_hi - PROP_MATURE_mean) / 1.96
+      ) %>%
+      # --- ADD COUNTS (no uncertainty propagation) ---
+      left_join(
+        SF_var %>%
+          dplyr::select(YEAR, REGION, DISTRICT, SIZE_5MM, SF_sum),
+        by = c("YEAR", "REGION", "DISTRICT", "SIZE_5MM")
+      ) %>%
+      mutate(
+        SF          = replace_na(SF_sum, 0),
+        NUM_MATURE  = SF * PROP_MATURE_mean,
+        NUM_IMMATURE= SF - NUM_MATURE,
+        TOTAL_CRAB  = SF
       )
     
     outputs$ogives <- ogives
-    #write.csv(ogives, paste0("./Maturity data processing/Output/", species, "_maleogives.csv"))
-    
   }
   
   ## SAM summary
@@ -207,7 +233,7 @@ calc_maturepop_estimates <- function(model, crab_data, years, species, output){
     message("Summarizing SAM")
     
     SAM <- SAM_all %>%
-      group_by(YEAR, SPECIES, DISTRICT) %>%
+      group_by(YEAR, SPECIES, REGION, DISTRICT) %>%
       summarise(
         SAM_mean  = mean(SAM, na.rm = TRUE),
         VAR_total = var(SAM,  na.rm = TRUE),
@@ -236,6 +262,8 @@ calc_maturepop_estimates <- function(model, crab_data, years, species, output){
       
       # replace PROP_MATURE with each model simulation draw
       crab_data$specimen <- cbind(sub1, fit.sim) %>%
+        mutate(DISTRICT = case_when((species == "TANNER" & region == "EBS" & district == "ALL") ~ "ALL", # mutating district = all for tanner
+                                    TRUE  ~ DISTRICT)) %>%
         rename(PROP_MATURE = fit.sim) %>%
         mutate(SAMPLING_FACTOR_MATURE = SAMPLING_FACTOR * PROP_MATURE,
                SAMPLING_FACTOR_IMMATURE = SAMPLING_FACTOR - SAMPLING_FACTOR_MATURE)
@@ -243,9 +271,12 @@ calc_maturepop_estimates <- function(model, crab_data, years, species, output){
       # calculate cpue for each simulation
       crab_data$specimen <- crab_data$specimen %>%
         mutate(SAMPLING_FACTOR = SAMPLING_FACTOR_MATURE) # specifying sampling factor as mat_sf so crabpack recognizes
+      
+      
       # Mature
       cpue_sim_mature <-  crabpack::calc_cpue(crab_data = crab_data, species = species,
                                                       size_min = NULL, size_max = NULL,  sex = "male",
+                                                      bin_1mm = isTRUE(size_1mm),
                                                       shell_condition = "new_hardshell") %>%
         mutate(CATEGORY = "Mature male")
       
@@ -255,6 +286,7 @@ calc_maturepop_estimates <- function(model, crab_data, years, species, output){
       
       cpue_sim_immature <-  crabpack::calc_cpue(crab_data = crab_data, species = species,
                                                         size_min = NULL, size_max = NULL,  sex = "male",
+                                                         bin_1mm = isTRUE(size_1mm),
                                                         shell_condition = "new_hardshell") %>%
         mutate(CATEGORY = "Immature male")
       
@@ -272,20 +304,24 @@ calc_maturepop_estimates <- function(model, crab_data, years, species, output){
         NSIM = n(),
         
         ## Means across maturity draws
+        COUNT_MEAN    = mean(COUNT,   na.rm = TRUE),
         CPUE_MEAN    = mean(CPUE,   na.rm = TRUE),
         CPUE_MT_MEAN   = mean(CPUE_MT,  na.rm = TRUE),
         CPUE_LBS_MEAN   = mean(CPUE_LBS,  na.rm = TRUE),
         
         ## Between-simulation variance (model uncertainty), no expansion uncertainty from db
+        COUNT_VAR = var(COUNT, na.rm = TRUE),
         CPUE_VAR   = var(CPUE,   na.rm = TRUE),
         CPUE_MT_VAR  = var(CPUE_MT,  na.rm = TRUE),
         CPUE_LBS_VAR = var(CPUE_LBS, na.rm = TRUE),
         
         ## SDs and 95% CIs
+        COUNT_SD = sqrt(COUNT_VAR),
         CPUE_SD     = sqrt(CPUE_VAR),
         CPUE_MT_SD    = sqrt(CPUE_MT_VAR),
         CPUE_LBS_SD   = sqrt(CPUE_LBS_VAR),
         
+        COUNT_CI = 1.96*COUNT_SD,
         CPUE_CI   = 1.96 * CPUE_SD,
         CPUE_MT_CI  = 1.96 * CPUE_MT_SD,
         CPUE_LBS_CI = 1.96 * CPUE_LBS_SD,
@@ -297,13 +333,19 @@ calc_maturepop_estimates <- function(model, crab_data, years, species, output){
       dplyr::select(!c(CPUE_VAR,
                        CPUE_MT_VAR,
                        CPUE_LBS_VAR,
-                       CPUE_SD, CPUE_MT_SD, CPUE_LBS_SD)) %>%
-      rename(CPUE      = CPUE_MEAN,
+                       CPUE_SD, CPUE_MT_SD, CPUE_LBS_SD,
+                       COUNT_VAR, COUNT_SD)) %>%
+      rename(COUNT = COUNT_MEAN,
+             CPUE      = CPUE_MEAN,
              CPUE_MT     = CPUE_MT_MEAN,
              CPUE_LBS    = CPUE_LBS_MEAN) %>%
       mutate(
         Estimator     = "sdmTMB",
         # Assign NAs for years with no snow chela data
+        COUNT = case_when(YEAR %in% c(2008, 2012, 2014, 2016, 2020) & SPECIES == "SNOW" ~ NA,
+                         TRUE ~ COUNT),
+        COUNT_CI = case_when(YEAR %in% c(2008, 2012, 2014, 2016, 2020) & SPECIES == "SNOW" ~ NA,
+                          TRUE ~ COUNT_CI),
         CPUE = case_when(YEAR %in% c(2008, 2012, 2014, 2016, 2020) & SPECIES == "SNOW" ~ NA,
                               TRUE ~ CPUE),
         CPUE_CI = case_when(YEAR %in% c(2008, 2012, 2014, 2016, 2020)  & SPECIES == "SNOW" ~ NA,
@@ -317,23 +359,29 @@ calc_maturepop_estimates <- function(model, crab_data, years, species, output){
         CPUE_LBS_CI = case_when(YEAR %in% c(2008, 2012, 2014, 2016, 2020) & SPECIES == "SNOW" ~ NA,
                                    TRUE ~ CPUE_LBS_CI),
         # Assign NAs for years with no Tanner data by district
+        COUNT = case_when(YEAR %in% c(2011, 2013, 2015, 2020) & SPECIES == "TANNER" & DISTRICT == "E166" ~ NA,
+                         YEAR %in% c(2013, 2015, 2020) & SPECIES == "TANNER" & DISTRICT %in% c("W166", "ALL") ~ NA,
+                         TRUE ~ COUNT),
+        COUNT_CI = case_when(YEAR %in% c(2011, 2013, 2015, 2020) & SPECIES == "TANNER" & DISTRICT == "E166" ~ NA,
+                         YEAR %in% c(2013, 2015, 2020) & SPECIES == "TANNER" & DISTRICT %in% c("W166", "ALL") ~ NA,
+                         TRUE ~ COUNT_CI),
         CPUE = case_when(YEAR %in% c(2011, 2013, 2015, 2020) & SPECIES == "TANNER" & DISTRICT == "E166" ~ NA,
-                              YEAR %in% c(2013, 2015, 2020) & SPECIES == "TANNER" & DISTRICT == "W166" ~ NA,
+                              YEAR %in% c(2013, 2015, 2020) & SPECIES == "TANNER" & DISTRICT %in% c("W166", "ALL") ~ NA,
                               TRUE ~ CPUE),
         CPUE_CI = case_when(YEAR %in% c(2011, 2013, 2015, 2020) & SPECIES == "TANNER" & DISTRICT == "E166" ~ NA,
-                                 YEAR %in% c(2013, 2015, 2020) & SPECIES == "TANNER" & DISTRICT == "W166" ~ NA,
+                                 YEAR %in% c(2013, 2015, 2020) & SPECIES == "TANNER" & DISTRICT %in% c("W166", "ALL") ~ NA,
                                  TRUE ~ CPUE_CI),
         CPUE_MT = case_when(YEAR %in% c(2011, 2013, 2015, 2020) & SPECIES == "TANNER" & DISTRICT == "E166" ~ NA,
-                               YEAR %in% c(2013, 2015, 2020) & SPECIES == "TANNER" & DISTRICT == "W166" ~ NA,
+                               YEAR %in% c(2013, 2015, 2020) & SPECIES == "TANNER" & DISTRICT %in% c("W166", "ALL") ~ NA,
                                TRUE ~ CPUE_MT),
         CPUE_MT_CI = case_when(YEAR %in% c(2011, 2013, 2015, 2020) & SPECIES == "TANNER" & DISTRICT == "E166" ~ NA,
-                                  YEAR %in% c(2013, 2015, 2020) & SPECIES == "TANNER" & DISTRICT == "W166" ~ NA,
+                                  YEAR %in% c(2013, 2015, 2020) & SPECIES == "TANNER" & DISTRICT %in% c("W166", "ALL") ~ NA,
                                   TRUE ~ CPUE_MT_CI),
         CPUE_LBS = case_when(YEAR %in% c(2011, 2013, 2015, 2020) & SPECIES == "TANNER" & DISTRICT == "E166" ~ NA,
-                                YEAR %in% c(2013, 2015, 2020) & SPECIES == "TANNER" & DISTRICT == "W166" ~ NA,
+                                YEAR %in% c(2013, 2015, 2020) & SPECIES == "TANNER" & DISTRICT %in% c("W166", "ALL") ~ NA,
                                 TRUE ~ CPUE_LBS),
         CPUE_LBS_CI = case_when(YEAR %in% c(2011, 2013, 2015, 2020) & SPECIES == "TANNER" & DISTRICT == "E166" ~ NA,
-                                   YEAR %in% c(2013, 2015, 2020) & SPECIES == "TANNER" & DISTRICT == "W166" ~ NA,
+                                   YEAR %in% c(2013, 2015, 2020) & SPECIES == "TANNER" & DISTRICT %in% c("W166", "ALL") ~ NA,
                                    TRUE ~ CPUE_LBS_CI))
     
     outputs$mature_cpue <- mature_cpue
