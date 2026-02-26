@@ -87,8 +87,8 @@ calc_maturepop_estimates(snow_mod, snow_dat, snow_yrs, species, region, district
 saveRDS(snow.out, "./Maturity data processing/Output/snow.outputforCody.rda")
 
 snow.ogives <- snow.out$ogives %>%
-                    filter(!YEAR %in% c(2008, 2012, 2014, 2016, 2020), # omitting no maturity years
-                           SIZE_5MM < 172.5) # filtering large Tanner crab classified as snow in 2025
+                    filter(!YEAR %in% c(2008, 2012, 2014, 2016, 2020)) # omitting no maturity years
+                       
 
 for.cody <- snow.ogives %>%
   filter(SIZE_5MM >= 27.5 & SIZE_5MM <= 132.5) %>%
