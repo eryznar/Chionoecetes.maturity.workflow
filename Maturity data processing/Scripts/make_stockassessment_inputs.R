@@ -36,24 +36,41 @@ calc_maturepop_estimates(tanner_mod, tanner_dat, tanner_yrs, species, region, di
 saveRDS(tanner.out, "./Maturity data processing/Output/tanner.outputforBuck.rda")
 t.out <- readRDS("./Maturity data processing/Output/tanner.outputforBuck.rda")
 
-t.out$ogives %>%
-  filter(YEAR >=1990) %>%
-  dplyr::select(SPECIES, REGION, DISTRICT, YEAR, SIZE_5MM, NUM_IMMATURE, 
-                NUM_MATURE, TOTAL_CRAB, PROP_MATURE_mean, PROP_MATURE_sd) %>%
-  rename(PROP_MATURE = PROP_MATURE_mean, PROP_MATURE_SD = PROP_MATURE_sd, SIZE_BIN = SIZE_5MM) %>%
-  filter(!YEAR %in% c(2008, 2012, 2014, 2016)) -> for.buck
+# Make Buck's data frame
+for.buck <- t.out$ogives %>%
+              filter(YEAR >=1990) %>%
+              dplyr::select(SPECIES, REGION, DISTRICT, YEAR, SIZE_5MM, NUM_IMMATURE, 
+                            NUM_MATURE, TOTAL_CRAB, PROP_MATURE_mean, PROP_MATURE_sd, LOGIT_mean, LOGIT_sd) %>%
+              rename(PROP_MATURE = PROP_MATURE_mean, PROP_MATURE_SD = PROP_MATURE_sd, LOGIT = LOGIT_mean, LOGIT_SD = LOGIT_sd, SIZE_BIN = SIZE_5MM) %>%
+              filter(!YEAR %in% c(2013, 2015, 2020)) # missing chela years across districts
+
+# Join with number of chela by size bin by year (from chela db)
+tanner.chela <-  read.csv("./Maturity data processing/Data/snow_tanner_cheladatabase.csv") %>% #already filtered appropriately
+                    dplyr::select(!X) %>%
+                    filter(SPECIES == "TANNER")  %>%
+                    # make 5mm bins
+                    mutate(SIZE_1MM = floor(SIZE),
+                           BIN = cut_width(SIZE, width = 5, center = 2.5, closed = "left", dig.lab = 4),
+                           BIN2 = BIN) %>%
+                    separate(BIN2, sep = ",", into = c("LOWER", "UPPER")) %>%
+                    mutate(LOWER = as.numeric(sub('.', '', LOWER)),
+                           UPPER = as.numeric(gsub('.$', '', UPPER)),
+                           SIZE_BIN = (UPPER + LOWER)/2) %>%
+                    group_by(YEAR, SIZE_BIN) %>%
+                    reframe(N_CHELA = n())
+
+for.buck2 <- right_join(for.buck, tanner.chela)
   
+write.csv(for.buck2, "./Maturity data processing/Output/TANNER_male_mat_ratio.csv")
 
-write.csv(for.buck, "./Maturity data processing/Output/TANNER_male_mat_ratio.csv")
-
-ggplot(for.buck, aes(SIZE_BIN, PROP_MATURE))+
+ggplot(for.buck2, aes(SIZE_BIN, PROP_MATURE))+
   geom_line()+
   scale_y_continuous(breaks = seq(0, 1, by = 0.25))+
   facet_wrap(~YEAR)+
   theme_bw()
 
 
-for.buck %>%
+for.buck2 %>%
   mutate(pmat = NUM_MATURE/TOTAL_CRAB) -> pp
 
 ggplot()+
@@ -61,14 +78,6 @@ ggplot()+
   geom_line(pp, mapping = aes(SIZE_BIN, pmat), color = "green")+
   facet_wrap(~YEAR)
   
-sub1 %>%
-  group_by(YEAR, SIZE_5MM) %>%
-  reframe(TOTAL_CRAB = sum(SAMPLING_FACTOR)) -> ll
-
-ggplot()+
-  geom_line(pp, mapping = aes(SIZE_5MM, TOTAL_CRAB), color = "blue")+ # making sure sampling factor is correct
-  geom_line(ll, mapping = aes(SIZE_5MM, TOTAL_CRAB), color = "green")+
-  facet_wrap(~YEAR)
 
 # FOR CODY ----
 # Specify function parameters

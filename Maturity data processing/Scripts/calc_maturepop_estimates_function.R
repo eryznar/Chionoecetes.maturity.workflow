@@ -179,20 +179,34 @@ calc_maturepop_estimates <- function(model, crab_data, years, species, region, d
   } # close model simulation loop
   
   # Bind across all sdmTMB simulations
+  # Bind across all sdmTMB simulations
   ogive_all <- bind_rows(ogive_draws_list)
   SAM_all   <- bind_rows(SAM_draws_list)
+  
   if ("ogives" %in% output) {
     message("Summarizing ogives")
     
     ogives <- ogive_all %>%
       group_by(YEAR, SPECIES, REGION, DISTRICT, SIZE_5MM) %>%
       summarise(
+        # --- response-scale summaries (as before) ---
         PROP_MATURE_mean = mean(p_b, na.rm = TRUE),
         VAR_total        = var(p_b,  na.rm = TRUE),
+        
+        # --- logit-scale summaries 
+        # clip to avoid infinite logits
+        LOGIT_mean = {
+          p_clip <- pmin(pmax(p_b, 1e-6), 1 - 1e-6)
+          mean(qlogis(p_clip), na.rm = TRUE)
+        },
+        LOGIT_sd = {
+          p_clip <- pmin(pmax(p_b, 1e-6), 1 - 1e-6)
+          sd(qlogis(p_clip), na.rm = TRUE)
+        },
         .groups = "drop"
       ) %>%
       mutate(
-        # handle NaNs and negative variances
+        # handle NaNs and negative variances on response scale
         PROP_MATURE_mean = ifelse(is.nan(PROP_MATURE_mean), 0, PROP_MATURE_mean),
         VAR_total        = replace_na(VAR_total, 0),
         VAR_total        = pmax(VAR_total, 0),
@@ -201,7 +215,7 @@ calc_maturepop_estimates <- function(model, crab_data, years, species, region, d
         # cap mean in [0,1]
         PROP_MATURE_mean = pmin(pmax(PROP_MATURE_mean, 0), 1),
         
-        # raw CI
+        # raw CI on response scale
         hi_raw = PROP_MATURE_mean + 1.96 * PROP_MATURE_sd,
         lo_raw = PROP_MATURE_mean - 1.96 * PROP_MATURE_sd,
         
@@ -227,6 +241,7 @@ calc_maturepop_estimates <- function(model, crab_data, years, species, region, d
     
     outputs$ogives <- ogives
   }
+  
   
   ## SAM summary
   if ("SAM" %in% output) {
