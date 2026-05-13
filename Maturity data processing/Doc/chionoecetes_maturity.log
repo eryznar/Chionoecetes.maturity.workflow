@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (TeX Live 2025) (preloaded format=pdflatex 2026.1.4)  9 JAN 2026 11:18
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (TeX Live 2025) (preloaded format=pdflatex 2026.1.4)  13 MAY 2026 11:30
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -467,7 +467,7 @@ Package uniquecounter Info: New unique counter `rerunfilecheck' on input line 28
 File: bkm-pdftex.def 2023-12-10 v1.31 bookmark driver for pdfTeX and luaTeX (HO)
 \BKM@id=\count337
 ))
-LaTeX Font Info:    Trying to load font information for T1+lmr on input line 102.
+LaTeX Font Info:    Trying to load font information for T1+lmr on input line 109.
 (c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/lm/t1lmr.fd
 File: t1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 ) (c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def
@@ -476,24 +476,24 @@ File: l3backend-pdftex.def 2025-10-09 L3 backend support: PDF output (pdfTeX)
 ) (./chionoecetes_maturity.aux)
 \openout1 = `chionoecetes_maturity.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 102.
-LaTeX Font Info:    ... okay on input line 102.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 102.
-LaTeX Font Info:    ... okay on input line 102.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 102.
-LaTeX Font Info:    ... okay on input line 102.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 102.
-LaTeX Font Info:    ... okay on input line 102.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 102.
-LaTeX Font Info:    ... okay on input line 102.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 102.
-LaTeX Font Info:    ... okay on input line 102.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 102.
-LaTeX Font Info:    ... okay on input line 102.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 102.
-LaTeX Font Info:    ... okay on input line 102.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 102.
-LaTeX Font Info:    ... okay on input line 102.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 109.
+LaTeX Font Info:    ... okay on input line 109.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 109.
+LaTeX Font Info:    ... okay on input line 109.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 109.
+LaTeX Font Info:    ... okay on input line 109.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 109.
+LaTeX Font Info:    ... okay on input line 109.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 109.
+LaTeX Font Info:    ... okay on input line 109.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 109.
+LaTeX Font Info:    ... okay on input line 109.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 109.
+LaTeX Font Info:    ... okay on input line 109.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 109.
+LaTeX Font Info:    ... okay on input line 109.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 109.
+LaTeX Font Info:    ... okay on input line 109.
 (c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.sty
 Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
 Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 485.
@@ -540,197 +540,222 @@ Package caption Info: hyperref package is loaded.
 Package caption Info: threeparttable package is loaded.
 Package caption Info: wrapfig package is loaded.
 Package caption Info: End \AtBeginDocument code.
-Package hyperref Info: Link coloring OFF on input line 102.
-LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 104.
+Package hyperref Info: Link coloring OFF on input line 109.
+LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 111.
 (c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/lm/ot1lmr.fd
 File: ot1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
-LaTeX Font Info:    Trying to load font information for OML+lmm on input line 104.
+LaTeX Font Info:    Trying to load font information for OML+lmm on input line 111.
 (c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/lm/omllmm.fd
 File: omllmm.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
-LaTeX Font Info:    Trying to load font information for OMS+lmsy on input line 104.
+LaTeX Font Info:    Trying to load font information for OMS+lmsy on input line 111.
 (c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/lm/omslmsy.fd
 File: omslmsy.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
-LaTeX Font Info:    Trying to load font information for OMX+lmex on input line 104.
+LaTeX Font Info:    Trying to load font information for OMX+lmex on input line 111.
 (c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/lm/omxlmex.fd
 File: omxlmex.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <12> on input line 104.
+(Font)              <12> on input line 111.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <8> on input line 104.
+(Font)              <8> on input line 111.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <6> on input line 104.
-LaTeX Font Info:    Trying to load font information for U+msa on input line 104.
+(Font)              <6> on input line 111.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 111.
 (c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 104.
+LaTeX Font Info:    Trying to load font information for U+msb on input line 111.
 (c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
-)
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <10> on input line 123.
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <7> on input line 123.
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <5> on input line 123.
-[1
+) [1
 
 {c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-var/fonts/map/pdftex/updmap/pdftex.map}{c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-ec.enc}]
-LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 130.
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <10> on input line 142.
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <7> on input line 142.
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <5> on input line 142.
+LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 149.
 (c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/lm/ts1lmr.fd
 File: ts1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
-)
-LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 144.
+) [2{c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-rm.enc}{c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathit.enc}{c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-ts1.enc}]
+LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 163.
 (c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/lm/t1lmtt.fd
 File: t1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
-) [2{c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-rm.enc}{c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathit.enc}{c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-ts1.enc}{c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathex.enc}] [3{c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathsy.enc}] [4] [5] [6] [7]
-Overfull \hbox (25.96704pt too wide) in paragraph at lines 335--345
+) [3{c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathex.enc}{c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathsy.enc}] [4] [5] [6] [7]
+Overfull \hbox (25.96704pt too wide) in paragraph at lines 360--370
  [][] 
  []
 
-<nchela_heatmap.png, id=137, 505.89pt x 578.16pt>
+[8]
+<nchela_heatmap.png, id=156, 505.89pt x 578.16pt>
 File: nchela_heatmap.png Graphic file (type png)
 <use nchela_heatmap.png>
-Package pdftex.def Info: nchela_heatmap.png  used on input line 352.
+Package pdftex.def Info: nchela_heatmap.png  used on input line 377.
 (pdftex.def)             Requested size: 469.76265pt x 536.87161pt.
-<snow_spatial_pmat.png, id=138, 614.295pt x 650.43pt>
+<snow_spatial_pmat.png, id=157, 614.295pt x 650.43pt>
 File: snow_spatial_pmat.png Graphic file (type png)
 <use snow_spatial_pmat.png>
-Package pdftex.def Info: snow_spatial_pmat.png  used on input line 361.
+Package pdftex.def Info: snow_spatial_pmat.png  used on input line 386.
 (pdftex.def)             Requested size: 469.75604pt x 497.38875pt.
-<tanner_spatial_pmat.png, id=139, 614.295pt x 650.43pt>
+<tanner_spatial_pmat.png, id=158, 614.295pt x 650.43pt>
 File: tanner_spatial_pmat.png Graphic file (type png)
 <use tanner_spatial_pmat.png>
-Package pdftex.def Info: tanner_spatial_pmat.png  used on input line 370.
+Package pdftex.def Info: tanner_spatial_pmat.png  used on input line 395.
 (pdftex.def)             Requested size: 469.75604pt x 497.38875pt.
-[8] [9 <./nchela_heatmap.png>] [10 <./snow_spatial_pmat.png>] [11 <./tanner_spatial_pmat.png>]
-<mat_workflow.png, id=158, 1445.4pt x 813.0375pt>
+[9] [10 <./nchela_heatmap.png>] [11 <./snow_spatial_pmat.png>] [12 <./tanner_spatial_pmat.png>]
+<mat_workflow.png, id=177, 1445.4pt x 813.0375pt>
 File: mat_workflow.png Graphic file (type png)
 <use mat_workflow.png>
-Package pdftex.def Info: mat_workflow.png  used on input line 380.
+Package pdftex.def Info: mat_workflow.png  used on input line 405.
 (pdftex.def)             Requested size: 650.424pt x 365.8635pt.
-[12 <./mat_workflow.png (PNG copy)>]
-<cutline.png, id=163, 285.7074pt x 465.9006pt>
+[13 <./mat_workflow.png (PNG copy)>]
+<cutline.png, id=183, 285.7074pt x 465.9006pt>
 File: cutline.png Graphic file (type png)
 <use cutline.png>
-Package pdftex.def Info: cutline.png  used on input line 390.
+Package pdftex.def Info: cutline.png  used on input line 415.
 (pdftex.def)             Requested size: 398.88464pt x 650.4578pt.
 
-LaTeX Warning: Float too large for page by 34.02779pt on input line 395.
+LaTeX Warning: Float too large for page by 34.02779pt on input line 420.
 
-<snow_mesh_300k.png, id=165, 460.72125pt x 413.74574pt>
+<snow_mesh_300k.png, id=185, 460.72125pt x 413.74574pt>
 File: snow_mesh_300k.png Graphic file (type png)
 <use snow_mesh_300k.png>
-Package pdftex.def Info: snow_mesh_300k.png  used on input line 399.
+Package pdftex.def Info: snow_mesh_300k.png  used on input line 424.
 (pdftex.def)             Requested size: 469.75371pt x 421.85724pt.
-<snow_QQ_year.png, id=166, 722.7pt x 722.7pt>
+<snow_QQ_year.png, id=186, 722.7pt x 722.7pt>
 File: snow_QQ_year.png Graphic file (type png)
 <use snow_QQ_year.png>
-Package pdftex.def Info: snow_QQ_year.png  used on input line 408.
+Package pdftex.def Info: snow_QQ_year.png  used on input line 433.
 (pdftex.def)             Requested size: 469.76045pt x 469.76045pt.
-<snow_QQ_size.png, id=167, 722.7pt x 722.7pt>
+<snow_QQ_size.png, id=187, 722.7pt x 722.7pt>
 File: snow_QQ_size.png Graphic file (type png)
 <use snow_QQ_size.png>
-Package pdftex.def Info: snow_QQ_size.png  used on input line 417.
+Package pdftex.def Info: snow_QQ_size.png  used on input line 442.
 (pdftex.def)             Requested size: 469.76045pt x 469.76045pt.
-<snow_spatialDHARMa_year.png, id=168, 722.7pt x 722.7pt>
+<snow_spatialDHARMa_year.png, id=188, 722.7pt x 722.7pt>
 File: snow_spatialDHARMa_year.png Graphic file (type png)
 <use snow_spatialDHARMa_year.png>
-Package pdftex.def Info: snow_spatialDHARMa_year.png  used on input line 426.
+Package pdftex.def Info: snow_spatialDHARMa_year.png  used on input line 451.
 (pdftex.def)             Requested size: 469.76045pt x 469.76045pt.
-<snow_spatialDHARMa_size.png, id=169, 722.7pt x 722.7pt>
+<snow_spatialDHARMa_size.png, id=189, 722.7pt x 722.7pt>
 File: snow_spatialDHARMa_size.png Graphic file (type png)
 <use snow_spatialDHARMa_size.png>
-Package pdftex.def Info: snow_spatialDHARMa_size.png  used on input line 435.
+Package pdftex.def Info: snow_spatialDHARMa_size.png  used on input line 460.
 (pdftex.def)             Requested size: 469.76045pt x 469.76045pt.
-<snow_ogive_comparison_legacy.sdmTMBwitherror.png, id=170, 722.7pt x 794.97pt>
+<snow_ogive_comparison_legacy.sdmTMBwitherror.png, id=190, 722.7pt x 722.7pt>
 File: snow_ogive_comparison_legacy.sdmTMBwitherror.png Graphic file (type png)
 <use snow_ogive_comparison_legacy.sdmTMBwitherror.png>
-Package pdftex.def Info: snow_ogive_comparison_legacy.sdmTMBwitherror.png  used on input line 444.
-(pdftex.def)             Requested size: 469.76045pt x 516.73651pt.
-<snow_SAM_comparison.png, id=171, 578.16pt x 433.62pt>
+Package pdftex.def Info: snow_ogive_comparison_legacy.sdmTMBwitherror.png  used on input line 469.
+(pdftex.def)             Requested size: 469.76045pt x 469.76045pt.
+<snow_SAM_comparison.png, id=191, 578.16pt x 433.62pt>
 File: snow_SAM_comparison.png Graphic file (type png)
 <use snow_SAM_comparison.png>
-Package pdftex.def Info: snow_SAM_comparison.png  used on input line 453.
+Package pdftex.def Info: snow_SAM_comparison.png  used on input line 478.
 (pdftex.def)             Requested size: 469.75385pt x 352.31538pt.
-<snow_bioabund_comparison_legacy.sdmTMB.png, id=172, 505.89pt x 433.62pt>
+<snow_bioabund_comparison_legacy.sdmTMB.png, id=192, 505.89pt x 433.62pt>
 File: snow_bioabund_comparison_legacy.sdmTMB.png Graphic file (type png)
 <use snow_bioabund_comparison_legacy.sdmTMB.png>
-Package pdftex.def Info: snow_bioabund_comparison_legacy.sdmTMB.png  used on input line 462.
+Package pdftex.def Info: snow_bioabund_comparison_legacy.sdmTMB.png  used on input line 487.
 (pdftex.def)             Requested size: 469.76265pt x 402.65372pt.
-<tanner_mesh_200k.png, id=173, 460.72125pt x 413.74574pt>
+<snow_retrospective_ogives.png, id=193, 578.16pt x 505.89pt>
+File: snow_retrospective_ogives.png Graphic file (type png)
+<use snow_retrospective_ogives.png>
+Package pdftex.def Info: snow_retrospective_ogives.png  used on input line 496.
+(pdftex.def)             Requested size: 469.75385pt x 411.0346pt.
+<snow_retrospective_bioabund.png, id=194, 505.89pt x 361.35pt>
+File: snow_retrospective_bioabund.png Graphic file (type png)
+<use snow_retrospective_bioabund.png>
+Package pdftex.def Info: snow_retrospective_bioabund.png  used on input line 505.
+(pdftex.def)             Requested size: 469.76265pt x 335.54477pt.
+<tanner_mesh_200k.png, id=195, 460.72125pt x 413.74574pt>
 File: tanner_mesh_200k.png Graphic file (type png)
 <use tanner_mesh_200k.png>
-Package pdftex.def Info: tanner_mesh_200k.png  used on input line 471.
+Package pdftex.def Info: tanner_mesh_200k.png  used on input line 514.
 (pdftex.def)             Requested size: 469.75371pt x 421.85724pt.
-<tanner_QQ_year.png, id=174, 722.7pt x 722.7pt>
+<tanner_QQ_year.png, id=196, 722.7pt x 722.7pt>
 File: tanner_QQ_year.png Graphic file (type png)
 <use tanner_QQ_year.png>
-Package pdftex.def Info: tanner_QQ_year.png  used on input line 480.
+Package pdftex.def Info: tanner_QQ_year.png  used on input line 523.
 (pdftex.def)             Requested size: 469.76045pt x 469.76045pt.
-<tanner_QQ_size.png, id=175, 722.7pt x 722.7pt>
+<tanner_QQ_size.png, id=197, 722.7pt x 722.7pt>
 File: tanner_QQ_size.png Graphic file (type png)
 <use tanner_QQ_size.png>
-Package pdftex.def Info: tanner_QQ_size.png  used on input line 489.
+Package pdftex.def Info: tanner_QQ_size.png  used on input line 532.
 (pdftex.def)             Requested size: 469.76045pt x 469.76045pt.
-<tanner_spatialDHARMa_year.png, id=176, 722.7pt x 722.7pt>
+<tanner_spatialDHARMa_year.png, id=198, 722.7pt x 722.7pt>
 File: tanner_spatialDHARMa_year.png Graphic file (type png)
 <use tanner_spatialDHARMa_year.png>
-Package pdftex.def Info: tanner_spatialDHARMa_year.png  used on input line 498.
+Package pdftex.def Info: tanner_spatialDHARMa_year.png  used on input line 541.
 (pdftex.def)             Requested size: 469.76045pt x 469.76045pt.
-<tanner_spatialDHARMa_size.png, id=177, 722.7pt x 722.7pt>
+<tanner_spatialDHARMa_size.png, id=199, 722.7pt x 722.7pt>
 File: tanner_spatialDHARMa_size.png Graphic file (type png)
 <use tanner_spatialDHARMa_size.png>
-Package pdftex.def Info: tanner_spatialDHARMa_size.png  used on input line 507.
+Package pdftex.def Info: tanner_spatialDHARMa_size.png  used on input line 550.
 (pdftex.def)             Requested size: 469.76045pt x 469.76045pt.
-<tannerE166_ogive_comparison_legacy.sdmTMBwitherror.png, id=178, 722.7pt x 794.97pt>
+<tannerE166_ogive_comparison_legacy.sdmTMBwitherror.png, id=200, 722.7pt x 722.7pt>
 File: tannerE166_ogive_comparison_legacy.sdmTMBwitherror.png Graphic file (type png)
 <use tannerE166_ogive_comparison_legacy.sdmTMBwitherror.png>
-Package pdftex.def Info: tannerE166_ogive_comparison_legacy.sdmTMBwitherror.png  used on input line 516.
-(pdftex.def)             Requested size: 469.76045pt x 516.73651pt.
-<tannerW166_ogive_comparison_legacy.sdmTMBwitherror.png, id=179, 722.7pt x 794.97pt>
+Package pdftex.def Info: tannerE166_ogive_comparison_legacy.sdmTMBwitherror.png  used on input line 559.
+(pdftex.def)             Requested size: 469.76045pt x 469.76045pt.
+<tannerW166_ogive_comparison_legacy.sdmTMBwitherror.png, id=201, 722.7pt x 722.7pt>
 File: tannerW166_ogive_comparison_legacy.sdmTMBwitherror.png Graphic file (type png)
 <use tannerW166_ogive_comparison_legacy.sdmTMBwitherror.png>
-Package pdftex.def Info: tannerW166_ogive_comparison_legacy.sdmTMBwitherror.png  used on input line 525.
-(pdftex.def)             Requested size: 469.76045pt x 516.73651pt.
-<tanner_SAM_comparison.png, id=180, 578.16pt x 578.16pt>
+Package pdftex.def Info: tannerW166_ogive_comparison_legacy.sdmTMBwitherror.png  used on input line 568.
+(pdftex.def)             Requested size: 469.76045pt x 469.76045pt.
+<tanner_SAM_comparison.png, id=202, 578.16pt x 433.62pt>
 File: tanner_SAM_comparison.png Graphic file (type png)
 <use tanner_SAM_comparison.png>
-Package pdftex.def Info: tanner_SAM_comparison.png  used on input line 534.
-(pdftex.def)             Requested size: 469.75385pt x 469.75385pt.
-<tannerE_bioabund_comparison_legacy.sdmTMB.png, id=181, 505.89pt x 433.62pt>
+Package pdftex.def Info: tanner_SAM_comparison.png  used on input line 577.
+(pdftex.def)             Requested size: 469.75385pt x 352.31538pt.
+<tannerE_bioabund_comparison_legacy.sdmTMB.png, id=203, 505.89pt x 433.62pt>
 File: tannerE_bioabund_comparison_legacy.sdmTMB.png Graphic file (type png)
 <use tannerE_bioabund_comparison_legacy.sdmTMB.png>
-Package pdftex.def Info: tannerE_bioabund_comparison_legacy.sdmTMB.png  used on input line 543.
+Package pdftex.def Info: tannerE_bioabund_comparison_legacy.sdmTMB.png  used on input line 586.
 (pdftex.def)             Requested size: 469.76265pt x 402.65372pt.
-<tannerW_bioabund_comparison_legacy.sdmTMB.png, id=182, 505.89pt x 433.62pt>
+<tannerW_bioabund_comparison_legacy.sdmTMB.png, id=204, 505.89pt x 433.62pt>
 File: tannerW_bioabund_comparison_legacy.sdmTMB.png Graphic file (type png)
 <use tannerW_bioabund_comparison_legacy.sdmTMB.png>
-Package pdftex.def Info: tannerW_bioabund_comparison_legacy.sdmTMB.png  used on input line 552.
+Package pdftex.def Info: tannerW_bioabund_comparison_legacy.sdmTMB.png  used on input line 595.
 (pdftex.def)             Requested size: 469.76265pt x 402.65372pt.
-[13 <./cutline.png>] [14 <./snow_mesh_300k.png>] [15 <./snow_QQ_year.png>] [16 <./snow_QQ_size.png>] [17 <./snow_spatialDHARMa_year.png>] [18 <./snow_spatialDHARMa_size.png>] [19 <./snow_ogive_comparison_legacy.sdmTMBwitherror.png>] [20 <./snow_SAM_comparison.png>] [21 <./snow_bioabund_comparison_legacy.sdmTMB.png>] [22 <./tanner_mesh_200k.png>] [23 <./tanner_QQ_year.png>] [24 <./tanner_QQ_size.png>] [25 <./tanner_spatialDHARMa_year.png>] [26 <./tanner_spatialDHARMa_size.png>] [27 <./tannerE166_ogive_comparison_legacy.sdmTMBwitherror.png>] [28 <./tannerW166_ogive_comparison_legacy.sdmTMBwitherror.png>] [29 <./tanner_SAM_comparison.png>] [30 <./tannerE_bioabund_comparison_legacy.sdmTMB.png>] [31 <./tannerW_bioabund_comparison_legacy.sdmTMB.png>] (./chionoecetes_maturity.aux)
+<TannerE_retrospective_ogives.png, id=205, 578.16pt x 505.89pt>
+File: TannerE_retrospective_ogives.png Graphic file (type png)
+<use TannerE_retrospective_ogives.png>
+Package pdftex.def Info: TannerE_retrospective_ogives.png  used on input line 604.
+(pdftex.def)             Requested size: 469.75385pt x 411.0346pt.
+<TannerW_retrospective_ogives.png, id=206, 578.16pt x 505.89pt>
+File: TannerW_retrospective_ogives.png Graphic file (type png)
+<use TannerW_retrospective_ogives.png>
+Package pdftex.def Info: TannerW_retrospective_ogives.png  used on input line 613.
+(pdftex.def)             Requested size: 469.75385pt x 411.0346pt.
+<tanner_retrospective_bioabund.png, id=207, 505.89pt x 361.35pt>
+File: tanner_retrospective_bioabund.png Graphic file (type png)
+<use tanner_retrospective_bioabund.png>
+Package pdftex.def Info: tanner_retrospective_bioabund.png  used on input line 622.
+(pdftex.def)             Requested size: 469.76265pt x 335.54477pt.
+[14 <./cutline.png>] [15 <./snow_mesh_300k.png>] [16 <./snow_QQ_year.png>] [17 <./snow_QQ_size.png>] [18 <./snow_spatialDHARMa_year.png>] [19 <./snow_spatialDHARMa_size.png>] [20 <./snow_ogive_comparison_legacy.sdmTMBwitherror.png>] [21 <./snow_SAM_comparison.png>] [22 <./snow_bioabund_comparison_legacy.sdmTMB.png>] [23 <./snow_retrospective_ogives.png>] [24 <./snow_retrospective_bioabund.png>] [25 <./tanner_mesh_200k.png>] [26 <./tanner_QQ_year.png>] [27 <./tanner_QQ_size.png>] [28 <./tanner_spatialDHARMa_year.png>] [29 <./tanner_spatialDHARMa_size.png>] [30 <./tannerE166_ogive_comparison_legacy.sdmTMBwitherror.png>] [31 <./tannerW166_ogive_comparison_legacy.sdmTMBwitherror.png>] [32 <./tanner_SAM_comparison.png>] [33 <./tannerE_bioabund_comparison_legacy.sdmTMB.png>] [34 <./tannerW_bioabund_comparison_legacy.sdmTMB.png>] [35 <./TannerE_retrospective_ogives.png>] [36 <./TannerW_retrospective_ogives.png>] [37 <./Tanner_retrospective_bioabund.png>] (./chionoecetes_maturity.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2025-12-29>
  ***********
  ) 
 Here is how much of TeX's memory you used:
- 14657 strings out of 469519
- 239834 string characters out of 5467613
- 656297 words of memory out of 5000000
- 42977 multiletter control sequences out of 15000+600000
+ 14732 strings out of 469519
+ 242206 string characters out of 5467613
+ 656834 words of memory out of 5000000
+ 43040 multiletter control sequences out of 15000+600000
  689057 words of font info for 86 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
  89i,11n,93p,1665b,484s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx10.pfb><c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx12.pfb><c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmex10.pfb><c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi10.pfb><c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi5.pfb><c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi7.pfb><c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr10.pfb><c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr12.pfb><c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr17.pfb><c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr7.pfb><c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmri10.pfb><c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmri12.pfb><c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy10.pfb><c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy7.pfb><c:/Users/emily.ryznar/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmtt10.pfb>
-Output written on chionoecetes_maturity.pdf (31 pages, 12663970 bytes).
+Output written on chionoecetes_maturity.pdf (37 pages, 14023186 bytes).
 PDF statistics:
- 399 PDF objects out of 1000 (max. 8388607)
- 304 compressed objects within 4 object streams
- 77 named destinations out of 1000 (max. 500000)
- 220 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 451 PDF objects out of 1000 (max. 8388607)
+ 345 compressed objects within 4 object streams
+ 89 named destinations out of 1000 (max. 500000)
+ 253 words of extra memory for PDF output out of 10000 (max. 10000000)
 

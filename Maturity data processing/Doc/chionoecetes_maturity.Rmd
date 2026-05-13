@@ -1,5 +1,6 @@
 ---
-title: "Updated workflow for processing morphometric maturity data for Bering Sea *Chionoecetes* crab stocks"
+title: "Updated workflow for processing morphometric maturity data for Bering Sea \\emph{Chionoecetes} crab stocks"
+subtitle: "Update for Crab Plan Team"
 author: |
   | Emily Ryznar
   | NOAA Fisheries 
@@ -8,31 +9,43 @@ date: "`r format(Sys.time(), '%B %Y')`"
 output:
   bookdown::pdf_document2:
     fig_caption: true
-    includes: null
     toc: no
 header-includes:
-   - \usepackage{caption}
-   - \newcommand{\blandscape}{\begin{landscape}}
-   - \newcommand{\elandscape}{\end{landscape}}
-   - \usepackage{pdflscape}
-
+  - \usepackage{caption}
+  - \usepackage{pdflscape}
+  - \newcommand{\blandscape}{\begin{landscape}}
+  - \newcommand{\elandscape}{\end{landscape}}
 ---
 \pagenumbering{arabic}
 
-```{r global_options, include=FALSE, echo = FALSE, message = FALSE, warning=FALSE}
+```{r global_options, include=FALSE, echo=FALSE, message=FALSE, warning=FALSE}
 library(knitr)
-opts_chunk$set(fig.width = 12, fig.height = 7, out.width  = "100%", out.height = "100%", fig.align = "center", echo = FALSE, warning = FALSE, message = FALSE,  dpi=300)
-
+opts_chunk$set(
+  fig.width = 12, fig.height = 7,
+  out.width  = "100%", out.height = "100%",
+  fig.align = "center",
+  echo = FALSE, warning = FALSE, message = FALSE,
+  dpi = 300
+)
 ```
 
-```{r, load_packages, echo = FALSE, include = FALSE}
-
+```{r load_packages, echo=FALSE, include=FALSE}
 library(xtable)
 library(tidyverse)
-
 options(xtable.comment = FALSE)
-
 ```
+
+# Comments and updates from January 2026 Crab Plan Team {-}
+**1) “The CPT noted that it would be possible to fit the models using a Bernoulli rather than a binomial likelihood, obviating the need to discretize the data.”**
+*Addressed. Models are now fit using Bernoulli likelihood by size without any size binning (see Methods below).*
+
+**2) “CPT members also noted that one extra component of variance needs to be accounted for in the new workflow: the step in which uncertainty is quantified by summarizing ogive variation across draws appears to be missing the subsampling component of variance. The CPT recommended incorporating this subsampling component of variance into the new workflow.”**
+*Addressed. Subsampling fraction uncertainty (abundance-at-size) is bootstrapped and propagated through to ogive and size-at-50% maturity estimates within each sdmTMB simulation draw (see Methods below).*
+
+**3) A retrospective analysis would be useful to evaluate if withholding recent years of data changes ogive shape + uncertainty and abundance + uncertainty.**
+*Addressed. Withholding years does not significantly change ogive shape + uncertainty or abundance + uncertainty (see Methods and Figures \@ref(fig:snow-ogive-retro)-\@ref(fig:snow-abund-retro) and \@ref(fig:tannerE-ogive-retro)- \@ref(fig:tanner-abund-retro)).*
+
+
 # Introduction {-}
 Stock assessment authors require unbiased and precise estimates of population parameters to appropriately model marine populations. Parameters such as age-at-length and maturity-at-size usually cannot be measured directly and thus need to be estimated through various sampling designs, often via fisheries-independent surveys. In these surveys, age- or maturity compositions are defined as the proportion of a population belonging to a specific age or maturity class, which are usually estimated via a two-stage sampling design. In the first stage, species are randomly subsampled from a haul and measured for size ("subsample one"; e.g., length, carapace width, etc.). From this sized subsample, a further subsample is taken, from which more detailed biological data are collected such as otoliths for age estimation or chela height for crab morphometric maturity estimation (("subsample two"; Quinn and Deriso 1999). From there, subsample two data are usually aggregated into certain size bins and the proportion at age or proportion mature is calculated for each bin. For fish, this is usually achieved through a classic age-length-key (ALK; Fridriksson 1934) that describes the probability of being a specific age at a given length, which is then used to assign ages to individual fish in subsample one that have only been measured for length. Using this all of this information together with haul-level data, abundance and biomass at age and age compositions can then be calculated via design-based methods (Steward and Hamel 2014; Thorson and Haltuch 2019). 
 
@@ -93,11 +106,13 @@ Y_i &\sim \text{Bernoulli}(p_i) \\
 
 where \(Y_i\) is the maturity status for crab \(i\), \(s_i\) is its size with smooth function \(f()\), \(\beta_{t_i}\) is a fixed effect of year, \(\omega(x_i)\) is the spatial Gaussian random field and \(\varepsilon_{t_i}(x_i)\) is the spatiotemporal Gaussian random field with independent increments over time (“iid”). For both snow crab and Tanner crab, we specified the spatial random field to exhibit anisotropic covariance. Other decision points included the resolution of the spatial mesh used in fitting the model, the number of knots in the smooth function for size, and whether the effect of size could change over space (modified via the `spatial_varying` argument) or time (modified via the `time_varying` argument). We fit models with these different decision points in mind and compared each model’s performance using *sdmTMB*’s `sanity()` function, AIC, log-likelihood via cross-validation, and DHARMa residuals by year, by size, and in space. Any model that did not initially pass *sdmTMB*'s `sanity()` check was omitted from further evaluation. We also evaluated fitting simpler spatial GAM models and fitting models separately by year, but sdmTMB models outperformed spatial GAMs and models separate by year did not pass `sanity()` checks. Therefore, we did not pursue these approaches any further. For Tanner crab, there were not enough maturity data to fit separate *sdmTMB* models by Tanner crab east and west of 166°. However, we do plot separate ogives, SAM time series, and mature biomass/abundance time series by these districts. 
 
-Uncertainty in \(q_{s,m}\), the probability mature at size, was quantified by simulating from each model's joint precision matrix of fixed and random effects, following recommendations for spatiotemporal GLMMs in *sdmTMB*. Predictive simulations (n=300) of \(q_{s,m}\) were generated for all measured specimen crab in subsample one from the best-fitting model for each species. For maturity ogives, we binned sizes into 5mm bins and computed the mean \(q_{s,m}\) weighted by the corresponding \(\hat{c}_{s,i}\) for each year, size bin, and simulation to account for spatial variation in population density. Mean maturity ogives are plotted across simulations with 95% confidence intervals. To calculate and incorporate uncertainty in SAM, we computed the size at which the each simulation's weighted ogive first intersects 50\% each year. The resulting distribution of SAM across simulations was summarized by its mean and empirical 95% confidence interval, which we interpret as capturing spatiotemporal and process-related variability in SAM under the fitted models.
+Uncertainty in \(q_{s,m}\), the probability mature at size, was quantified by simulating from each model's joint precision matrix of fixed and random effects, following recommendations for spatiotemporal GLMMs in *sdmTMB*. Predictive simulations (n=300) of \(q_{s,m}\) were generated for all measured specimen crab in subsample one from the best-fitting model for each species. For maturity ogives, we binned sizes into 5mm bins and computed the mean \(q_{s,m}\) weighted by the corresponding \(\hat{c}_{s,i}\) for each year, size bin, and simulation to account for spatial variation in population density. To additionally incorporate haul-level variability in abundance-at-size, we estimated the mean and standard deviation of haul-level sampling factors within each year, station, and size bin, and for every predictive simulation drew perturbed sampling factors from this distribution and recomputed the weighted ogives. Mean maturity ogives are plotted across simulations with 95% confidence intervals. To calculate and incorporate uncertainty in SAM, we computed the size at which the each simulation's weighted ogive first intersects 50\% each year. The resulting distribution of SAM across simulations was summarized by its mean and empirical 95% confidence interval, which we interpret as capturing spatiotemporal and process-related variability in SAM under the fitted models.
 
-Mature station-level biomass and abundance, or \(\hat{c}_{m,i}\), is calculated following Equation \@ref(eq:matabund-at-size) above by multiplying the predicted probability mature at size, \(q_{s,m}\), by the \(\hat{c}_{s,i}\) abundance/biomass at size for each station \(i\). Associated uncertainty in \(\hat{c}_{m,i}\) estimation was propagated in a two-step procedure. First, we used the 300 predictive simulations of \(q_{s,m}\) to calculate 300 mature biomass and abundance estimates per stratum through standard design-based procedures (Zacher et al., 2025). Second, for each of these estimates, additional survey uncertainty was incorporated by drawing 1,000 values from a normal distribution with mean equal to the design-based estimate and standard deviation equal to the reported 95\% confidence interval divided by 1.96. This procedure jointly propagates model predictive uncertainty and survey sampling uncertainty into the final mature biomass and abundance estimates.
+Mature station-level biomass and abundance, or \(\hat{c}_{m,i}\), is calculated following Equation \@ref(eq:matabund-at-size) above by multiplying the predicted probability mature at size, \(q_{s,m}\), by the \(\hat{c}_{s,i}\) abundance/biomass at size for each station \(i\) that also accounts for haul-level variability in abundance/biomass at size. Associated uncertainty in \(\hat{c}_{m,i}\) estimation was propagated in a two-step procedure. First, we used the 300 predictive simulations of \(q_{s,m}\) to calculate 300 mature biomass and abundance estimates per stratum through standard design-based procedures (Zacher et al., 2025). Second, for each of these estimates, additional survey uncertainty was incorporated by drawing 1,000 values from a normal distribution with mean equal to the design-based estimate and standard deviation equal to the reported 95\% confidence interval divided by 1.96. This procedure jointly propagates model predictive uncertainty and survey sampling uncertainty into the final mature biomass and abundance estimates.
 
 Finally, maturity ogives, SAM, and mature biomass and abundance generated from the best *sdmTMB* model for each species were compared with the legacy workflow output. Since the legacy workflow uses 10mm bins, we interpolated 10mm ogives to 5mm bins using *mgcv*'s `gam()` function (Wood, 2011) for comparison with *sdmTMB* 5mm ogives. 
+
+To address the January 2026 CPT recommendation to evaluate the effect of witholding years of data on ogive shape and uncertainty as well as abundance time series shape and uncertainty, we fit the best models for each species above while withholding 2022-2025 from model fitting. We then compared the output of these retrospective models with the best models fit using the full time series. 
 
 # Results/Discussion {-}
 ## Snow crab {-}
@@ -107,12 +122,16 @@ Maturity ogives from the legacy (interpolated to 5mm bins) and sdmTMB workflows 
 
 Despite ogive and SAM differences, mature biomass and abundance were highly aligned between legacy and sdmTMB workflows (Figure \@ref(fig:snow-bioabund)). The largest differences were earlier in the time series, in 2011, and in 2018, but the CIs still overlapped between the two workflows. While the two workflows may result in different ogives and SAMs by year, these differences are not propagated to mature biomass and abundance since these estimates are aggregated across sizes. 
 
+Ogive shape and uncertainty did not significantly differ between models fit using the full time series and models fit while withholding the last four years (Figure \@ref(fig:snow-ogive-retro)). The same pattern applies to mature abundance time series and uncertainty (Figure \@ref(fig:snow-abund-retro)).
+
 ## Tanner crab {-}
 For Tanner crab, the best *sdmTMB* model in terms of AIC and cross validation was a model using 10 knots in the smooth function for size (Table \@ref(tab:tanner-kcomparison)), a 200-knot spatial mesh (Figure \@ref(fig:tanner-mesh-200)), and a spatially-varying effect of size (Table \@ref(tab:tanner-parcomparison)). This model passed *sdmTMB*'s `sanity()` check, had the lowest AIC, and the largest log-likelihood. QQ-plots of DHARMa residuals for this model generally did not demonstrate any strong deviations when evaluated by year (Figure \@ref(fig:tanner-QQ-yr)) except for 2011, which had limited chela data. As with snow crab, QQ-plots of DHARMa residuals by size exhibited some evidence of deviation in the smallest and largest size bins likely due to full separation in maturity status and limited data for these bins, but were otherwise well-behaved (Figure \@ref(fig:tanner-QQ-size)). Spatial plots of DHARMa residuals did not exhibit evidence of spatiotemporal autocorrelation when examined by year (Figure \@ref(fig:tanner-spatialDHARMa-yr)) or by size (Figure \@ref(fig:tanner-spatialDHARMa-size)).
 
 Ogives were generally similar between legacy (interpolated to 5mm bins) and *sdmTMB* workflows for Tanner crab east of 166° (Figure \@ref(fig:tannerE-ogives)) and west of 166° (Figure \@ref(fig:tannerW-ogives)). This could be due to less Tanner crab maturing at smaller sizes which drives the hump-shaped ogives observed for snow crab, resulting in a more logistic-shaped ogives that aligns with the legacy workflow. Despite similarities in ogive shape between the two workflows, SAM values still differed for both east and west districts (Figure \@ref(fig:tanner-SAM)). As with snow crab, SAM uncertainty was generally larger in the *sdmTMB* workflow as it propagates spatiotemporal heterogeneity, though in many years the CIs overlap for SAM estimates across workflows and districts. The largest differences in SAM correspond to years where the ogives exhibited the greatest difference in shape between the workflows, such as in 2006 for each Tanner east and 1990 for Tanner west.
 
 As with snow crab, mature biomass and abundance were highly similar between legacy and sdmTMB workflows for Tanner crab east of 166°(Figure \@ref(fig:tannerE-bioabund)) and west of 166° (Figure \@ref(fig:tannerW-bioabund)). The largest differences were earlier in the time series and from 2005-2010. However, the CIs overlapped across the time series between the two workflows. 
+
+Ogive shape and uncertainty did not significantly differ between models fit using the full time series and models fit while withholding the last four years for neither Tanner crab east of 166°(Figure \@ref(fig:tannerE-ogive-retro)) or (Figure \@ref(fig:tannerW-ogive-retro)). The same pattern applies to mature abundance time series and uncertainty (Figure \@ref(fig:tanner-abund-retro)).
 
 # Conclusion {-}
 Accounting for potential spatiotemporal variation and various forms of uncertainty in vital metrics such as *Chionoecetes* maturity is essential for informing stock biology and for accurate inputs in stock assessments. Here, we argue that the updated AFSC SAP *Chionoecetes* maturity data processing workflow provides several distinct advantages relative to the legacy workflow. First, the updated workflow eliminates the use of sampling factor to model maturity in subsample two, thereby correcting the inappropriate commingling of subsample one and two that occurred in the legacy workflow. Second, by switching to *sdmTMB* spatiotemporal models, the updated workflow accounts for spatiotemporal variation in maturity, robustly handles data gaps due to uneven sampling, and facilitates future spatiotemporal maturity research. Third, the updated workflow explicitly incorporates uncertainty from model maturity estimates in downstream outputs. Finally, by flexibly modeling maturity-at-size relationships with strong diagnostics, the updated workflow strengthens confidence that observed non-logistic ogives reflect biological signal rather than process artifacts. In conclusion, we argue that the advantages of the updated workflow yield more accurate and unbiased maturity estimates compared to the legacy workflow. 
@@ -164,7 +183,7 @@ tab <- data.frame(
     "Does not use size bins except for plotting ogives",
     "Fits sdmTMB models to chela data",
     "Uses Bernoulli (mature/immature) as response",
-    "Robust to spatiotemporal gaps and variability in maturity through random fields; uncertainty is also tied to sample sizes via Bernoulli structure and propagated across all workflow steps",
+    "Robust to spatiotemporal gaps and variability in maturity through random fields; uncertainty is also tied to sample sizes via Bernoulli structure and propagated across all workflow steps; abundance-at-size (sampling factor) uncertainty also simulated and propagated",
     "Models vetted through diagnostics",
     "SAM and ogives are weighted by abundance to account for population size"
   ),
@@ -291,6 +310,16 @@ knitr::include_graphics("snow_SAM_comparison.png")
 knitr::include_graphics("snow_bioabund_comparison_legacy.sdmTMB.png")
 ```
 
+```{r snow-ogive-retro, fig.align = "center", fig.cap = "Snow crab maturity ogives predicted using sdmTMB and the full data time series (pink) and witholding the last four years of data (blue). Shaded area denotes sdmTMB 95% simulation-based confidence intervals derived from predictive simulations that propagate spatial, spatiotemporal, and abundance-at-size uncertainty."}
+
+knitr::include_graphics("snow_retrospective_ogives.png")
+```
+
+```{r snow-abund-retro, fig.align = "center", fig.cap = "Mature snow crab abundance (millions) predicted by sdmTMB models fit using the full data time series (pink) and witholding the last four years of data (blue). Shaded areas indicate 95% CIs."}
+
+knitr::include_graphics("snow_retrospective_bioabund.png")
+```
+
 ```{r tanner-mesh-200, fig.align = "center", fig.cap = "Tanner crab sdmTMB spatial mesh using 200 knots. Red points designate mesh vertices and black dots are observations from the chela data."}
 
 knitr::include_graphics("tanner_mesh_200k.png")
@@ -340,4 +369,19 @@ knitr::include_graphics("tannerE_bioabund_comparison_legacy.sdmTMB.png")
 ```{r tannerW-bioabund, fig.align = "center", fig.cap = "Mature Tanner crab abundance (millions; top panel) and biomass (metric tons; bottom panel) predicted by the legacy workflow (tan) and proposed workflow using sdmTMB (blue) for Tanner crab west of 166°. Shaded areas indicate 95% CIs."}
 
 knitr::include_graphics("tannerW_bioabund_comparison_legacy.sdmTMB.png")
+```
+
+```{r tannerE-ogive-retro, fig.align = "center", fig.cap = "Tanner east maturity ogives predicted using sdmTMB and the full data time series (pink) and witholding the last four years of data (blue). Shaded area denotes sdmTMB 95% simulation-based confidence intervals derived from predictive simulations that propagate spatial, spatiotemporal, and abundance-at-size uncertainty."}
+
+knitr::include_graphics("TannerE_retrospective_ogives.png")
+```
+
+```{r tannerW-ogive-retro, fig.align = "center", fig.cap = "Tanner west maturity ogives predicted using sdmTMB and the full data time series (pink) and witholding the last four years of data (blue). Shaded area denotes sdmTMB 95% simulation-based confidence intervals derived from predictive simulations that propagate spatial, spatiotemporal, and abundance-at-size uncertainty."}
+
+knitr::include_graphics("TannerW_retrospective_ogives.png")
+```
+
+```{r tanner-abund-retro, fig.align = "center", fig.cap = "Mature Tanner crab abundance (millions) predicted by sdmTMB models fit using the full data time series (pink) and witholding the last four years of data (blue). Shaded areas indicate 95% CIs."}
+
+knitr::include_graphics("tanner_retrospective_bioabund.png")
 ```
