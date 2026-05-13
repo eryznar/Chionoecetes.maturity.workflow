@@ -25,7 +25,7 @@ tanner_mod <- readRDS("./Maturity data processing/Doc/Tanner models/sdmTMB_spVAR
 tanner_dat <- readRDS("./Maturity data processing/Data/tanner_survey_specimenEBS.rda")
 tanner_yrs <- c(1990:2019, 2021:2025)
 species <- "TANNER"
-output <- c("ogives")
+output <- c("cpue")
 region <- "EBS"
 district <- "ALL"
 size_1mm <- FALSE
@@ -85,7 +85,7 @@ snow_mod <- readRDS("./Maturity data processing/Doc/Snow models/sdmTMB_spVAR_noB
 snow_dat <- readRDS("./Maturity data processing/Data/snow_survey_specimenEBS.rda")
 snow_yrs <- c(1989:2019, 2021:2025)
 species <- "SNOW"
-output <- "ogives"
+output <- "cpue"
 region <- "EBS"
 district <- "ALL"
 size_1mm <- FALSE

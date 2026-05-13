@@ -17,15 +17,23 @@ source("./Maturity data processing/Scripts/calc_maturepop_estimates_function.R")
   snow_dat <- readRDS("./Maturity data processing/Data/snow_survey_specimenEBS.rda")
   snow_yrs <- c(1989:2019, 2021:2025)
   species <- "SNOW"
-  output <- NULL
+  output = c("ogives")
+  district = "ALL"
+  size_1mm = NULL
+  region = "EBS"
+  size_min = NULL
+  size_max =NULL
   
   # Run function ----
-  calc_maturepop_estimates(snow_mod, snow_dat, snow_yrs, species, output) -> snow.out
+  calc_maturepop_estimates(snow_mod, snow_dat, snow_yrs, species, region, district, size_1mm, size_min, size_max, output) -> snow.out
+  
+  saveRDS(snow.out, "./Maturity data processing/Doc/snow_matpop.rda")
+  snow.out <- readRDS("./Maturity data processing/Doc/snow_matpop.rda")
   
   # OGIVES ----
   # sdmTMB
-  snow_ogive_sdmTMB <- snow.out$ogives %>%
-    mutate(Estimator = "sdmTMB") %>%
+  snow_ogive_sdmTMB2 <- snow.out$ogives %>%
+    mutate(Estimator = "sdmTMB2") %>%
     dplyr::select(YEAR, SIZE_5MM, SPECIES, DISTRICT, PROP_MATURE_mean, PROP_MATURE_lo, PROP_MATURE_hi, Estimator)
   
   snow_ogive_sdmTMB <- read.csv("./Maturity data processing/Output/SNOW_maleogives.csv") %>%
@@ -44,7 +52,9 @@ source("./Maturity data processing/Scripts/calc_maturepop_estimates_function.R")
     mutate(Estimator = "Legacy")
   
   # Combine and plot
-  ogive_plot_dat <- rbind(snow_ogive_sdmTMB %>% rename(PROP_MATURE = PROP_MATURE_mean, SIZE = SIZE_5MM), snow_legacy_ogives %>% mutate(PROP_MATURE_lo = NA, PROP_MATURE_hi = NA))
+  ogive_plot_dat <- rbind(snow_ogive_sdmTMB %>% rename(PROP_MATURE = PROP_MATURE_mean, SIZE = SIZE_5MM), 
+                          snow_legacy_ogives %>% mutate(PROP_MATURE_lo = NA, PROP_MATURE_hi = NA),
+                          snow_ogive_sdmTMB %>% rename(PROP_MATURE = PROP_MATURE_mean, SIZE = SIZE_5MM))
   
   ggplot(ogive_plot_dat,  aes(SIZE, PROP_MATURE, color = Estimator))+
     geom_ribbon(aes(SIZE, ymin = PROP_MATURE_lo, ymax = PROP_MATURE_hi, fill = Estimator), color = NA, alpha = 0.35)+
@@ -215,8 +225,20 @@ source("./Maturity data processing/Scripts/calc_maturepop_estimates_function.R")
   tanner_dat <- readRDS("./Maturity data processing/Data/tanner_survey_specimenEBS.rda")
   tanner_yrs <- c(1990:2019, 2021:2025)
   species <- "TANNER"
-  output <- NULL
-
+  output = c("ogives", "SAM", "bioabund")
+  district = "E166"
+  size_1mm = NULL
+  region = "EBS"
+  
+  # Run function ----
+  calc_maturepop_estimates(tanner_mod, tanner_dat, tanner_yrs, species, region, district, size_1mm, output) -> tanE.out
+  
+  district = "W166"
+  calc_maturepop_estimates(tanner_mod, tanner_dat, tanner_yrs, species, region, district, size_1mm, output) -> tanW.out
+  
+  saveRDS(tanE.out, "./Maturity data processing/Doc/tannerE_matpop.rda")
+  saveRDS(tanW.out, "./Maturity data processing/Doc/tannerW_matpop.rda")
+  
   # Run function ----
   calc_maturepop_estimates(tanner_mod, tanner_dat, tanner_yrs, species, output) -> tanner.out
  

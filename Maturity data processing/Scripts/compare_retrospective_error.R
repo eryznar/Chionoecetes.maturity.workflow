@@ -119,9 +119,12 @@ crab_data = snow_dat
 years = snow_yrs
 species = "SNOW"
 output = NULL
+district = "ALL"
+size_1mm = NULL
+region = "EBS"
 
 
-s.out <- calc_maturepop_estimates(model, crab_data, years, species, output)
+s.out <- calc_maturepop_estimates(model, crab_data, years, species, region, district, size_1mm, output)
 saveRDS(s.out, "./Maturity data processing/Doc/snow_matpop_retrospective.rda")
 
 
@@ -222,9 +225,178 @@ tanner_yrs <- c(1990:2019, 2021) # omitting recent years
 crab_data = tanner_dat
 years = tanner_yrs
 species = "TANNER"
-output = NULL
+output = c("ogives", "SAM", "bioabund")
+district = "E166"
+size_1mm = NULL
+region = "EBS"
 
 
-t.out <- calc_maturepop_estimates(model, crab_data, years, species, output)
- 
-saveRDS(t.out, "./Maturity data processing/Doc/tanner_matpop_retrospective.rda")
+t.out.east <- calc_maturepop_estimates(model, crab_data, years, species, region, district, size_1mm, output)
+
+district <- "W166"
+t.out.west <- calc_maturepop_estimates(model, crab_data, years, species, region, district, size_1mm, output)
+
+saveRDS(t.out.east, "./Maturity data processing/Doc/tannerE_matpop_retrospective.rda")
+saveRDS(t.out.west, "./Maturity data processing/Doc/tannerW_matpop_retrospective.rda")
+
+# Compare estimates----
+# Snow crab
+sr <- readRDS("./Maturity data processing/Doc/snow_matpop_retrospective.rda")
+s <- readRDS("./Maturity data processing/Doc/snow_matpop.rda")
+
+# Snow ogives
+sr$ogives %>%
+  filter(SIZE_5MM <=150) -> sor
+s$ogives %>%
+  filter(SIZE_5MM <=150) -> so
+
+ggplot()+
+  geom_line(sor, mapping = aes(SIZE_5MM, PROP_MATURE_mean, color = as.factor(1)), linewidth = 0.75)+
+  geom_ribbon(sor, mapping = aes(SIZE_5MM, ymin = PROP_MATURE_lo, ymax = PROP_MATURE_hi, fill = as.factor(1)), color = NA, alpha = 0.35)+
+  geom_line(so, mapping = aes(SIZE_5MM, PROP_MATURE_mean, color = as.factor(2)), linewidth = 0.75)+
+  geom_ribbon(so , mapping = aes(SIZE_5MM, ymin = PROP_MATURE_lo, ymax = PROP_MATURE_hi, fill = as.factor(2)), color = NA, alpha = 0.35)+
+  facet_wrap(~YEAR)+
+  scale_fill_manual(values = c("blue", "salmon"), labels = c("≤2021", "≤2025"), name = "")+
+  scale_color_manual(values = c( "blue", "salmon"), labels = c("≤2021", "≤2025"), name = "")+
+  theme_bw()+
+  ggtitle("Snow")+
+  ylab("Proportion mature")+
+  xlab("Carapace width (mm)")+
+  theme(axis.text = element_text(size = 12),
+        axis.title = element_text(size = 12),
+        strip.text = element_text(size = 10), 
+        legend.text  = element_text(size = 12))
+
+ggsave("./Maturity data processing/Doc/snow_retrospective_ogives.png", width = 8, height = 7)
+
+# Snow bioabund
+sr$mature_bioabund %>% filter(CATEGORY == "Mature male", YEAR >1988 & YEAR <2022) %>%
+  full_join(data.frame(YEAR = 2020)) -> pp
+s$mature_bioabund %>% filter(CATEGORY == "Mature male", YEAR >1988) %>%
+  full_join(data.frame(YEAR = 2020)) -> tt
+
+
+ggplot()+
+  geom_line(pp, mapping = aes(YEAR, ABUNDANCE, color = as.factor(1)), linewidth = 0.75)+
+  geom_ribbon(pp, mapping = aes(YEAR, ymin = ABUNDANCE - ABUNDANCE_CI,
+                                ymax = ABUNDANCE + ABUNDANCE_CI,  fill = as.factor(1)), alpha = 0.25)+
+  geom_line(tt, mapping = aes(YEAR, ABUNDANCE, color = as.factor(2)), linewidth = 0.75)+
+  geom_ribbon(tt, mapping = aes(YEAR, ymin = ABUNDANCE - ABUNDANCE_CI,
+                                ymax = ABUNDANCE + ABUNDANCE_CI, fill = as.factor(2)), alpha = 0.25)+
+  geom_point(pp %>% filter(YEAR %in% c(2013, 2015)),
+             mapping = aes(YEAR, ABUNDANCE, color = as.factor(1)))+
+  geom_errorbar(pp %>% filter(YEAR %in% c(2013, 2015)),
+                mapping = aes(x = YEAR, ymin = ABUNDANCE - ABUNDANCE_CI, ymax = ABUNDANCE + ABUNDANCE_CI, 
+                              color= as.factor(1)), linewidth = 1)+
+  geom_point(tt %>% filter(YEAR %in% c(2013, 2015)),
+             mapping = aes(YEAR, ABUNDANCE, color = as.factor(2)))+
+  geom_errorbar(tt %>% filter(YEAR %in% c(2013, 2015)),
+                mapping = aes(x = YEAR, ymin = ABUNDANCE - ABUNDANCE_CI, ymax = ABUNDANCE + ABUNDANCE_CI, 
+                              color= as.factor(2)), linewidth = 1)+
+  scale_fill_manual(values = c("blue", "salmon"), labels = c("≤2021", "≤2025"), name = "")+
+  scale_color_manual(values = c( "blue", "salmon"), labels = c("≤2021", "≤2025"), name = "")+
+  theme_bw()+
+  ggtitle("Snow")+
+  ylab("Abundance (millions)")+
+  xlab("Year")+
+  theme(axis.text = element_text(size = 12),
+        axis.title = element_text(size = 12),
+        strip.text = element_text(size = 10))
+
+ggsave("./Maturity data processing/Doc/snow_retrospective_bioabund.png", width = 7, height = 5)
+
+
+# Tanner 
+twr <- readRDS("./Maturity data processing/Doc/tannerW_matpop_retrospective.rda")
+tw <- readRDS("./Maturity data processing/Doc/tannerW_matpop.rda")
+
+# Tanner ogives
+twr$ogives -> or
+tw$ogives -> o
+
+ggplot()+
+  geom_line(or %>% filter(DISTRICT == "W166"), mapping = aes(SIZE_5MM, PROP_MATURE_mean, color = as.factor(1)), linewidth = 0.75)+
+  geom_ribbon(or %>% filter(DISTRICT == "W166"), mapping = aes(SIZE_5MM, ymin = PROP_MATURE_lo, ymax = PROP_MATURE_hi, fill = as.factor(1)), color = NA, alpha = 0.35)+
+  geom_line(o %>% filter(DISTRICT == "W166"), mapping = aes(SIZE_5MM, PROP_MATURE_mean, color = as.factor(2)), linewidth = 0.75)+
+  geom_ribbon(o %>% filter(DISTRICT == "W166"), mapping = aes(SIZE_5MM, ymin = PROP_MATURE_lo, ymax = PROP_MATURE_hi, fill = as.factor(2)), color = NA, alpha = 0.35)+
+  facet_wrap(~YEAR)+
+  scale_fill_manual(values = c("blue", "salmon"), labels = c("≤2021", "≤2025"), name = "")+
+  scale_color_manual(values = c( "blue", "salmon"), labels = c("≤2021", "≤2025"), name = "")+
+  theme_bw()+
+  ggtitle("Tanner West")+
+  ylab("Proportion mature")+
+  xlab("Carapace width (mm)")+
+  theme(axis.text = element_text(size = 12),
+        axis.title = element_text(size = 12),
+        strip.text = element_text(size = 10), 
+        legend.text  = element_text(size = 12))
+
+ggsave("./Maturity data processing/Doc/TannerW_retrospective_ogives.png", width = 8, height = 7)
+
+ggplot()+
+  geom_line(or %>% filter(DISTRICT == "E166"), mapping = aes(SIZE_5MM, PROP_MATURE_mean, color = as.factor(1)), linewidth = 0.75)+
+  geom_ribbon(or %>% filter(DISTRICT == "E166"), mapping = aes(SIZE_5MM, ymin = PROP_MATURE_lo, ymax = PROP_MATURE_hi, fill = as.factor(1)), color = NA, alpha = 0.35)+
+  geom_line(o %>% filter(DISTRICT == "E166"), mapping = aes(SIZE_5MM, PROP_MATURE_mean, color = as.factor(2)), linewidth = 0.75)+
+  geom_ribbon(o %>% filter(DISTRICT == "E166"), mapping = aes(SIZE_5MM, ymin = PROP_MATURE_lo, ymax = PROP_MATURE_hi, fill = as.factor(2)), color = NA, alpha = 0.35)+
+  facet_wrap(~YEAR)+
+  scale_fill_manual(values = c("blue", "salmon"), labels = c("≤2021", "≤2025"), name = "")+
+  scale_color_manual(values = c( "blue", "salmon"), labels = c("≤2021", "≤2025"), name = "")+
+  theme_bw()+
+  ggtitle("Tanner East")+
+  ylab("Proportion mature")+
+  xlab("Carapace width (mm)")+
+  theme(axis.text = element_text(size = 12),
+        axis.title = element_text(size = 12),
+        strip.text = element_text(size = 10), 
+        legend.text  = element_text(size = 12))
+
+ggsave("./Maturity data processing/Doc/TannerE_retrospective_ogives.png", width = 8, height = 7)
+
+
+# Tanner bioabund
+twr$mature_bioabund %>% filter(CATEGORY == "Mature male", 
+                               YEAR >1989 & YEAR <2022, is.na(DISTRICT)==FALSE) %>%
+  full_join(data.frame(YEAR = 2020, DISTRICT = c(unique(.$DISTRICT)))) -> pp
+tw$mature_bioabund %>% filter(CATEGORY == "Mature male", YEAR >1989, is.na(DISTRICT)==FALSE) %>%
+  full_join(data.frame(YEAR = 2020, DISTRICT = c(unique(.$DISTRICT)))) -> tt
+
+
+ggplot()+
+  geom_line(pp, mapping = aes(YEAR, ABUNDANCE, color = as.factor(1)), linewidth = 0.75)+
+  geom_ribbon(pp, mapping = aes(YEAR, ymin = ABUNDANCE - ABUNDANCE_CI,
+                                ymax = ABUNDANCE + ABUNDANCE_CI,  fill = as.factor(1)), alpha = 0.25)+
+  geom_line(tt, mapping = aes(YEAR, ABUNDANCE, color = as.factor(2)), linewidth = 0.75)+
+  geom_ribbon(tt, mapping = aes(YEAR, ymin = ABUNDANCE - ABUNDANCE_CI,
+                                ymax = ABUNDANCE + ABUNDANCE_CI, fill = as.factor(2)), alpha = 0.25)+
+  geom_point(pp %>% filter(DISTRICT == "E166", YEAR %in% c(2012, 2014)),
+             mapping = aes(YEAR, ABUNDANCE, color = as.factor(1)))+
+  geom_errorbar(pp %>% filter(DISTRICT == "E166", YEAR %in% c(2012, 2014)),
+                mapping = aes(x = YEAR, ymin = ABUNDANCE - ABUNDANCE_CI, ymax = ABUNDANCE + ABUNDANCE_CI, 
+                              color= as.factor(1)), linewidth = 1)+
+  geom_point(tt %>% filter(DISTRICT == "E166", YEAR %in% c(2012, 2014)),
+             mapping = aes(YEAR, ABUNDANCE, color = as.factor(2)))+
+  geom_errorbar(tt %>% filter(DISTRICT == "E166", YEAR %in% c(2012, 2014)),
+                mapping = aes(x = YEAR, ymin = ABUNDANCE - ABUNDANCE_CI, ymax = ABUNDANCE + ABUNDANCE_CI, 
+                              color= as.factor(2)), linewidth = 1)+
+  geom_point(pp %>% filter(DISTRICT == "W166", YEAR %in% c(2014)),
+             mapping = aes(YEAR, ABUNDANCE, color = as.factor(1)))+
+  geom_errorbar(pp %>% filter(DISTRICT == "W166", YEAR %in% c(2014)),
+                mapping = aes(x = YEAR, ymin = ABUNDANCE - ABUNDANCE_CI, ymax = ABUNDANCE + ABUNDANCE_CI, 
+                              color= as.factor(1)), linewidth = 1)+
+  geom_point(tt %>% filter(DISTRICT == "W166", YEAR %in% c(2014)),
+             mapping = aes(YEAR, ABUNDANCE, color = as.factor(2)))+
+  geom_errorbar(tt %>% filter(DISTRICT == "W166", YEAR %in% c(2014)),
+                mapping = aes(x = YEAR, ymin = ABUNDANCE - ABUNDANCE_CI, ymax = ABUNDANCE + ABUNDANCE_CI, 
+                              color= as.factor(2)), linewidth = 1)+
+  facet_wrap(~DISTRICT, nrow = 2)+
+  scale_fill_manual(values = c("blue", "salmon"), labels = c("≤2021", "≤2025"), name = "")+
+  scale_color_manual(values = c( "blue", "salmon"), labels = c("≤2021", "≤2025"), name = "")+
+  theme_bw()+
+  ggtitle("Tanner")+
+  ylab("Abundance (millions)")+
+  xlab("Year")+
+  theme(axis.text = element_text(size = 12),
+        axis.title = element_text(size = 12),
+        strip.text = element_text(size = 10))
+
+ggsave("./Maturity data processing/Doc/Tanner_retrospective_bioabund.png", width = 7, height = 5)
