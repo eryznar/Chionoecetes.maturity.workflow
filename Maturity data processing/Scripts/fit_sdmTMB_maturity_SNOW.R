@@ -348,3 +348,41 @@ mod.2 <- sdmTMB(
 )
 
 saveRDS(mod.2, "./Maturity data processing/Doc/Snow models/sdmTMB_spVAR_noBIN_k300.rda")
+
+
+
+
+# Set params
+mat.msh <- sdmTMB::make_mesh(mod.dat, c("LONGITUDE","LATITUDE"), n_knots = 90, type = "kmeans")
+
+xtra.time <- c(2008, 2012, 2014, 2016, 2020) # missing years across all size bins
+
+mod.2 <- sdmTMB(
+  MATURE ~ s(SIZE, k = 13) + YEAR_SCALED, 
+  spatial = "on",
+  spatiotemporal = "iid",
+  mesh = mat.msh,
+  family = binomial(),
+  time = "YEAR",
+  spatial_varying = ~ 0 + SIZE,
+  extra_time = xtra.time,
+  anisotropy = TRUE,
+  data = mod.dat
+)
+
+
+
+mod_tv_size <- sdmTMB(
+  MATURE ~ s(SIZE, k = 13) + YEAR_SCALED,  # or just ~ YEAR_SCALED
+  spatial = "on",
+  spatiotemporal = "iid",
+  mesh = mat.msh,
+  family = binomial(),
+  time = "YEAR",
+  time_varying = ~ 0 + SIZE,
+  time_varying_type = "rw",
+  extra_time = xtra.time,
+  anisotropy = TRUE,
+  data = mod.dat,
+  silent = FALSE
+)
