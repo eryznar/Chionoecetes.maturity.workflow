@@ -5,10 +5,10 @@
 # NOTES:
 
 
-# LOAD LIBS/PARAMS ---------------------------------------------------------------------------------------
+# LOAD LIBS/PARAMS -----
 source("./Scripts/Sourced scripts/load_libs_params.R")
 
-# LOAD DATA ----------------------------------------------------------------------------------------------
+# LOAD DATA -----
 # Load minima data, calculate cutline params
 snow_minima <- read.csv("./Output/chela_cutline_minima.csv") %>%
   filter(SPECIES == "SNOW") %>%
@@ -56,11 +56,8 @@ snow.chela <-  read.csv("./Data/snow_tanner_cheladatabase.csv") %>% #already fil
 
 
 # FIT MATURITY SDMTMB ----
-# Specify model data
-mod.dat <- snow.chela
-
 # Make mesh
-mat.msh <- sdmTMB::make_mesh(mod.dat, c("LONGITUDE","LATITUDE"), n_knots = 300, type = "kmeans")
+mat.msh <- sdmTMB::make_mesh(snow.chela, c("LONGITUDE","LATITUDE"), n_knots = 300, type = "kmeans")
 
 # Specify xtra time
 xtra.time <- c(2008, 2012, 2014, 2016, 2020) # missing years across all size bins
@@ -76,7 +73,7 @@ snow.mod <- sdmTMB(
   spatial_varying = ~ 0 + SIZE,
   extra_time = xtra.time,
   anisotropy = TRUE,
-  data = mod.dat,
+  data = snow.chela,
   silent = FALSE
 )
 
