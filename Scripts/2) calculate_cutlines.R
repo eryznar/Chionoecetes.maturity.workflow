@@ -3,11 +3,11 @@
 
 # Author: Emily Ryznar, Jon Richar, Shannon Hennessey
 
-# LOAD LIBS/PARAMS/DATA ----
-source("./Maturity data processing/Scripts/load_libs_params.R")
+# 1) LOAD LIBS/PARAMS/DATA ----
+source("./Scripts/Sourced scripts/load_libs_params.R")
 
-#  BIN DATA ----
-read.csv("./Maturity data processing/Data/snow_tanner_cheladatabase.csv") %>% 
+# 2) BIN CHELA DATA ----
+read.csv("./Data/snow_tanner_cheladatabase.csv") %>% 
   mutate(BIN = cut_width(LN_CW, width = 0.025, center = 0.0125, closed = "left", dig.lab = 4), # Subset data into size intervals at ln(CW) of 0.025
          BIN2 = BIN) %>%
   separate(BIN2, sep = ",", into = c("LOWER", "UPPER")) %>%
@@ -16,12 +16,11 @@ read.csv("./Maturity data processing/Data/snow_tanner_cheladatabase.csv") %>%
          MIDPOINT = (UPPER + LOWER)/2) -> bin.dat
 
 
-# CALCULATE MINIMA ----
+# 3) CALCULATE MINIMA ----
 # Sequentially apply KDE to the ln-chela height data for each interval, and identify minima of the resulting
 # density distributions to define maturity classes in a given interval, looping over species
 
 min.dat <- data.frame()
-#bandwidth <- 0.04 # can adjust this for kernal smoothing (lower = less smooth)
 species <- c("TANNER", "SNOW")
 
 for(s in 1:length(species)){
@@ -109,16 +108,11 @@ for(s in 1:length(species)){
 } # end species loop
 
 
-# Write output for use in subsequent scripts
-min.dat %>%
-  dplyr::select(SPECIES, BIN, LOWER, UPPER, MIDPOINT, MINIMUM) %>%
-  write.csv("./Maturity data processing/Output/chela_cutline_minima.csv", row.names = FALSE) 
-
-
-# Plot to make sure minima were calculated correctly
+# 3) PLOT DENSITY PLOTS WITH CUTLINE ----
 plot.dat <- right_join(bin.dat %>% dplyr::select(-UPPER, -LOWER), 
                        min.dat)
 
+# Snow density plots
 ggplot() +
   geom_density(plot.dat %>% filter(SPECIES == "SNOW"), mapping = aes(LN_CH), linewidth = 1, bw = 0.04) +
   geom_vline(plot.dat %>% filter(SPECIES == "SNOW"), mapping = aes(xintercept = MINIMUM), 
@@ -130,8 +124,11 @@ ggplot() +
   theme_bw() +
   theme(axis.text = element_text(size = 12),
         axis.title = element_text(size = 12))
-ggsave("./Maturity data processing/Figures/snow_density_plots.png", width = 20, height = 20)
 
+
+ggsave("./Figures/snow_density_plots.png", width = 20, height = 20)
+
+# Tanner density plots
 ggplot() +
   geom_density(plot.dat %>% filter(SPECIES == "TANNER"), mapping = aes(LN_CH), linewidth = 1) +
   geom_vline(plot.dat %>% filter(SPECIES == "TANNER"), mapping = aes(xintercept = MINIMUM), 
@@ -144,9 +141,10 @@ ggplot() +
   theme(axis.text = element_text(size = 12),
         axis.title = element_text(size = 12))
 
-ggsave("./Maturity data processing/Figures/tanner_density_plots.png", width = 20, height = 20)
+ggsave("./Figures/tanner_density_plots.png", width = 20, height = 20)
 
 
+# 4) FIT LINEAR CUTLINE MODEL AND PLOT ----
 # Fit linear model to evaluate ln(CH) minima (imm/mat division) and ln(CW) bin midpoint
 for(s in 1:length(species)){
   mod <- lm(MINIMUM ~ MIDPOINT, min.dat %>% filter(SPECIES == species[s]))
@@ -169,7 +167,7 @@ for(s in 1:length(species)){
           axis.title = element_text(size = 12))
   print(cut.plot)
   
-  ggsave(paste0("./Maturity data processing/Figures/cutline_lm_plot_", species[s], ".png"),
+  ggsave(paste0("./Figures/cutline_lm_plot_", species[s], ".png"),
          cut.plot, width = 6, height = 5)
 }
 
@@ -182,4 +180,12 @@ cutline.params <- min.dat %>%
                   dplyr::select(SPECIES, BETA0, BETA1) %>%
                   distinct()
 
-write.csv(cutline.params, "./Maturity data processing/Output/cutline_parameters.csv")
+write.csv(cutline.params, "./Output/cutline_parameters.csv")
+
+
+
+# SAVE CUTLINE MINIMA FOR DOWNSTREAM USE ----
+min.dat %>%
+  dplyr::select(SPECIES, BIN, LOWER, UPPER, MIDPOINT, MINIMUM) %>%
+  write.csv("./Output/chela_cutline_minima.csv", row.names = FALSE) 
+
