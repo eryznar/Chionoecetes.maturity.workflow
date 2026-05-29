@@ -1,4 +1,4 @@
-# PURPOSE: to calculate minima between dominant distribution modes of opilio chela height. Minima will serve as 
+# PURPOSE: to calculate minima between dominant distribution modes of snow and tanner chela height. Minima will serve as 
 # the distribution cutline to define morphometric maturity. 
 
 # Author: Emily Ryznar, Jon Richar, Shannon Hennessey
@@ -6,14 +6,16 @@
 # 1) LOAD LIBS/PARAMS/DATA ----
 source("./Scripts/Sourced scripts/load_libs_params.R")
 
-# 2) BIN CHELA DATA ----
-read.csv("./Data/snow_tanner_cheladatabase.csv") %>% 
-  mutate(BIN = cut_width(LN_CW, width = 0.025, center = 0.0125, closed = "left", dig.lab = 4), # Subset data into size intervals at ln(CW) of 0.025
-         BIN2 = BIN) %>%
-  separate(BIN2, sep = ",", into = c("LOWER", "UPPER")) %>%
-  mutate(LOWER = as.numeric(sub('.', '', LOWER)),
-         UPPER = as.numeric(gsub('.$', '', UPPER)),
-         MIDPOINT = (UPPER + LOWER)/2) -> bin.dat
+# 2) LOAD AND BIN CHELA DATA ----
+chela_db <- read.csv("./Data/snow_tanner_cheladatabase.csv") 
+
+bin.dat <- chela_db %>%
+              mutate(BIN = cut_width(LN_CW, width = 0.025, center = 0.0125, closed = "left", dig.lab = 4), # Subset data into size intervals at ln(CW) of 0.025
+                     BIN2 = BIN) %>%
+              separate(BIN2, sep = ",", into = c("LOWER", "UPPER")) %>%
+              mutate(LOWER = as.numeric(sub('.', '', LOWER)),
+                     UPPER = as.numeric(gsub('.$', '', UPPER)),
+                     MIDPOINT = (UPPER + LOWER)/2)
 
 
 # 3) CALCULATE MINIMA ----
@@ -173,14 +175,37 @@ for(s in 1:length(species)){
 
 
 # Pull out cutline parameters by species
-cutline.params <- min.dat %>%
+chela_db_cutlines <- min.dat %>%
                     group_by(SPECIES) %>%
                     mutate(BETA0 = coef(lm(MINIMUM ~ MIDPOINT))[1],
                            BETA1 = coef(lm(MINIMUM ~ MIDPOINT))[2]) %>%
                   dplyr::select(SPECIES, BETA0, BETA1) %>%
-                  distinct()
+                  distinct() %>%
+                  right_join(chela_db, .) %>%
+                  filter((SPECIES == "SNOW" & SIZE >= 35 & SIZE <= 135) | 
+                         (SPECIES == "TANNER" & SIZE >= 55 & SIZE <= 145)) %>% # filtering ! sizes without separation))
+                  mutate(CUTOFF = BETA0 + BETA1*LN_CW, # apply cutline model
+                         MATURE = case_when((LN_CH > CUTOFF) ~ 1,
+                                            TRUE ~ 0)) %>%
+                  st_as_sf(., coords = c("LONGITUDE", "LATITUDE"), crs = "+proj=longlat +datum=WGS84") %>% # make spatial
+                  st_transform(., crs = "+proj=utm +zone=2") %>% # transform to utm
+                  cbind(st_coordinates(.)) %>%
+                  as.data.frame(.) %>%
+                  mutate(LATITUDE = Y/1000, # scale to km so values don't get too large
+                         LONGITUDE = X/1000,
+                         YEAR_F = as.factor(YEAR),
+                         YEAR_SCALED = as.numeric(scale(YEAR)),
+                         MATURE = case_when((SPECIES == "SNOW" & SIZE <=35) ~ 0,
+                                            (SPECIES == "SNOW" & SIZE >= 135) ~ 1,
+                                            (SPECIES == "TANNER" & SIZE <=55) ~ 0,
+                                            (SPECIES == "TANNER" & SIZE >=145) ~ 1,
+                                            TRUE ~ MATURE)) %>%
+                  as.data.frame(.) %>%
+                  dplyr::select(YEAR, YEAR_SCALED, SPECIES, STATION_ID, LATITUDE, LONGITUDE, SIZE, MATURE) %>%
+                  filter(!(SPECIES == "SNOW" & YEAR == 2012)) # very little data in this year
 
-write.csv(cutline.params, "./Output/cutline_parameters.csv")
+# Overwrite cheladatabase csv with new MATURE column added based on cutline (and UTM coords)
+write.csv(chela_db_cutlines, "./Data/snow_tanner_cheladatabase.csv")
 
 
 
