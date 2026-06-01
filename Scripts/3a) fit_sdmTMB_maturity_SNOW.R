@@ -9,7 +9,7 @@
 source("./Scripts/Sourced scripts/load_libs_params.R")
 
 # LOAD CHELA DATA -----
-snow.chela <-  read.csv("./Data/snow_tanner_cheladatabase.csv") %>% #already filtered appropriately with cutline applied
+snow.chela <-  read.csv("./Data/chionoecetes_chela_withcutlines.csv") %>% #already filtered appropriately with cutline applied
                   dplyr::select(!X) %>%
                   filter(SPECIES == "SNOW") 
 

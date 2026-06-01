@@ -47,6 +47,6 @@ chela_db <- rbind(read.csv(paste0(data_dir, "specimen_chela.csv")), # includes s
   mutate(LN_CH = log(CHELA_HEIGHT),
          LN_CW = log(SIZE))
 
-write.csv(chela_db, "./Data/snow_tanner_cheladatabase.csv")
+write.csv(chela_db, "./Data/chionoecetes_chela.csv")
 
 

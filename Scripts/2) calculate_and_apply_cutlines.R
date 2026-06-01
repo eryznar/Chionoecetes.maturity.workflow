@@ -7,7 +7,7 @@
 source("./Scripts/Sourced scripts/load_libs_params.R")
 
 # 2) LOAD AND BIN CHELA DATA ----
-chela_db <- read.csv("./Data/snow_tanner_cheladatabase.csv") 
+chela_db <- read.csv("./Data/chionoecetes_chela.csv") 
 
 bin.dat <- chela_db %>%
               mutate(BIN = cut_width(LN_CW, width = 0.025, center = 0.0125, closed = "left", dig.lab = 4), # Subset data into size intervals at ln(CW) of 0.025
@@ -182,6 +182,7 @@ chela_db_cutlines <- min.dat %>%
                   dplyr::select(SPECIES, BETA0, BETA1) %>%
                   distinct() %>%
                   right_join(chela_db, .) %>%
+                  dplyr::select(!X) %>%
                   filter((SPECIES == "SNOW" & SIZE >= 35 & SIZE <= 135) | 
                          (SPECIES == "TANNER" & SIZE >= 55 & SIZE <= 145)) %>% # filtering ! sizes without separation))
                   mutate(CUTOFF = BETA0 + BETA1*LN_CW, # apply cutline model
@@ -193,7 +194,6 @@ chela_db_cutlines <- min.dat %>%
                   as.data.frame(.) %>%
                   mutate(LATITUDE = Y/1000, # scale to km so values don't get too large
                          LONGITUDE = X/1000,
-                         YEAR_F = as.factor(YEAR),
                          YEAR_SCALED = as.numeric(scale(YEAR)),
                          MATURE = case_when((SPECIES == "SNOW" & SIZE <=35) ~ 0,
                                             (SPECIES == "SNOW" & SIZE >= 135) ~ 1,
@@ -205,7 +205,7 @@ chela_db_cutlines <- min.dat %>%
                   filter(!(SPECIES == "SNOW" & YEAR == 2012)) # very little data in this year
 
 # Overwrite cheladatabase csv with new MATURE column added based on cutline (and UTM coords)
-write.csv(chela_db_cutlines, "./Data/snow_tanner_cheladatabase.csv")
+write.csv(chela_db_cutlines, "./Data/chionoecetes_chela_withcutlines.csv")
 
 
 
