@@ -39,14 +39,14 @@ library(tidync)
 # current.year <- 2025
 # years <- c(1989:current.year)
 
-# Specify directory
+# Specify directories
 dir <- "Y:/KOD_Research/Ryznar/Crab functional maturity"
 
 data_dir <- "Y:/KOD_Survey/EBS Shelf/Data_Processing/Data/" # for survey data
 
 remote_dir <- "Y:/KOD_Research/Ryznar/Crab functional maturity/"
 
-# CRS for spatial blocking
+# CRS for spatial stufff
 region_layers <- akgfmaps::get_base_layers("sebs")
 
 map.crs <- region_layers$crs
@@ -58,9 +58,4 @@ crs.latlon <- "epsg:4326"
 # Read in spatial layers
 source("Y:/KOD_Survey/EBS Shelf/Spatial crab/load.spatialdata.R")
 
-# Set coordinate reference system
-ncrs <- "+proj=aea +lat_0=50 +lon_0=-154 +lat_1=55 +lat_2=65 +x_0=0 +y_0=0 +datum=NAD83 +units=km +no_defs"
-
-# Load prediction grid
-ebs_grid <- read.csv(here::here(paste0(dir, "/ebs_coarse_grid.csv")))
 

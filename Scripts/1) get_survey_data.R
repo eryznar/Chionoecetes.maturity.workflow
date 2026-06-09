@@ -11,29 +11,29 @@ source("./Scripts/Sourced scripts/load_libs_params.R")
 # Set channel
 channel <- "API"
 
-# Set recent year
+# Set current year
 current_yr <- 2025
 
 # GET SNOW SURVEY SPECIMEN DATA FROM CRABPACK ----
 # Pull specimen data
 species <- "SNOW"
-specimen_data <- crabpack::get_specimen_data(species = species,
+snow_specimen <- crabpack::get_specimen_data(species = species,
                                              region = "EBS",
                                              years = 1989:current_yr,
                                              channel = channel)
 
-saveRDS(specimen_data, "./Data/snow_survey_specimenEBS.rda")
+saveRDS(snow_specimen, "./Data/snow_survey_specimenEBS.rda")
 
 
 # GET TANNER SURVEY SPECIMEN DATA FROM CRABPACK ----
 # Pull specimen data
 species <- "TANNER"
-specimen_data <- crabpack::get_specimen_data(species = species,
+tanner_specimen <- crabpack::get_specimen_data(species = species,
                                              region = "EBS",
                                              years = 1990:current_yr,
                                              channel = channel)
 
-saveRDS(specimen_data, "./Data/tanner_survey_specimenEBS.rda")
+saveRDS(tanner_specimen, "./Data/tanner_survey_specimenEBS.rda")
 
 
 # GET CHELA-DATA FOR SNOW AND TANNER THAT INCLUDES CHELA DB DATA ----

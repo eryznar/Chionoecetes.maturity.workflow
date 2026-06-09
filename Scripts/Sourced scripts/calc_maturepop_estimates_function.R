@@ -2,58 +2,79 @@
 # Author: Emily Ryznar
 
 calc_maturepop_estimates <- function(model, crab_data, years, species, region,
-                                     district, size_1mm, size_min, size_max, output) {
+                                     district, size_1mm, size_min, size_max,
+                                     fill_missing_years, output, n_sim) {
   
   outputs <- list()
-  gc()
   
-  #------------------------------------------------------------------
+  #-----------------------------
   # Prep specimen data -> sub1
-  #------------------------------------------------------------------
-  crab_data$specimen %>%
-    mutate(
-      DISTRICT = case_when(
-        (species == "TANNER" & region == "EBS" & district == "ALL") ~ "ALL",
-        TRUE ~ DISTRICT
-      )
-    ) %>%
-    filter(
-      REGION == region,
-      SPECIES == species,
-      SHELL_CONDITION == 2,
-      SEX == 1,
-      !(YEAR == 2025 & SPECIES == "SNOW" & SIZE == 172.5)
-    ) %>%
-    mutate(
-      BIN_5MM = cut_width(SIZE_1MM, width = 5, center = 2.5,
-                          closed = "left", dig.lab = 4),
-      BIN2 = BIN_5MM
-    ) %>%
-    separate(BIN2, sep = ",", into = c("LOWER", "UPPER")) %>%
-    mutate(
-      LOWER = as.numeric(sub('.', '', LOWER)),
-      UPPER = as.numeric(gsub('.$', '', UPPER)),
-      SIZE_5MM = (UPPER + LOWER) / 2
-    ) %>%
-    dplyr::select(!c(BIN_5MM, LOWER, UPPER)) %>%
-    mutate(
-      YEAR_F = as.factor(YEAR),
-      YEAR_SCALED = scale(YEAR)
-    ) %>%
-    st_as_sf(coords = c("LONGITUDE", "LATITUDE"),
-             crs = "+proj=longlat +datum=WGS84") %>%
-    st_transform(crs = "+proj=utm +zone=2") %>%
-    cbind(st_coordinates(.)) %>%
-    as.data.frame() %>%
-    mutate(
-      LATITUDE = Y / 1000,
-      LONGITUDE = X / 1000
-    ) %>%
-    filter(YEAR %in% unique(model$data$YEAR)) -> sub1
+  #-----------------------------
+  sub1 <- crab_data$specimen %>%
+          filter(
+            REGION == region,
+            SPECIES == species,
+            SHELL_CONDITION == 2,
+            SEX == 1,
+            !(YEAR == 2025 & SPECIES == "SNOW" & SIZE == 172.5)) %>%
+          mutate(
+            BIN_5MM = cut_width(SIZE_1MM, width = 5, center = 2.5,
+                                closed = "left", dig.lab = 4),
+            BIN2 = BIN_5MM) %>%
+          separate(BIN2, sep = ",", into = c("LOWER", "UPPER")) %>%
+          mutate(
+            LOWER = as.numeric(sub('.', '', LOWER)),
+            UPPER = as.numeric(gsub('.$', '', UPPER)),
+            SIZE_5MM = (UPPER + LOWER) / 2) %>%
+          dplyr::select(!c(BIN_5MM, LOWER, UPPER)) %>%
+          mutate(
+            YEAR_F = as.factor(YEAR),
+            YEAR_SCALED = scale(YEAR)) %>%
+          st_as_sf(coords = c("LONGITUDE", "LATITUDE"),
+                   crs = "+proj=longlat +datum=WGS84") %>%
+          st_transform(crs = "+proj=utm +zone=2") %>%
+          cbind(st_coordinates(.)) %>%
+          as.data.frame() %>%
+          mutate(
+            LATITUDE = Y / 1000,
+            LONGITUDE = X / 1000) 
   
-  species <- unique(sub1$SPECIES)
+  #-----------------------------
+  # District logic
+  #-----------------------------
+  if (species == "TANNER" && is.null(district)) {
+    # TANNER + NULL: keep E/W and add ALL copy
+    sub1 <- dplyr::bind_rows(
+      sub1,
+      sub1 %>% dplyr::mutate(DISTRICT = "ALL")
+    )
+  } else if (species == "TANNER" && !is.null(district) && district == "ALL") {
+    # TANNER + ALL: combine E166 and W166 into ALL only
+    sub1 <- sub1 %>%
+      dplyr::filter(DISTRICT %in% c("E166", "W166")) %>%
+      dplyr::mutate(DISTRICT = "ALL")
+  } else if (species == "SNOW" && is.null(district)) {
+    # SNOW + NULL: leave all districts
+    # sub1 unchanged
+  } else if (!is.null(district)) {
+    # any species with a specified district: filter to that / those
+    sub1 <- sub1 %>%
+      dplyr::filter(DISTRICT %in% district)
+  }
   
-  # outputs to produce
+  
+  #-----------------------------
+  # Do you want the model to fill in missing chela years? 
+  #-----------------------------
+  sub1 <- if (fill_missing_years) {
+    sub1 # Yes
+  } else {
+    dplyr::filter(sub1, YEAR %in% unique(model$data$YEAR)) # No
+  }
+ 
+  #-----------------------------
+  # Specify outputs
+  #-----------------------------
   all_opts <- c("ogives", "SAM", "cpue", "bioabund")
   if (missing(output) || is.null(output)) {
     output <- all_opts
@@ -61,13 +82,20 @@ calc_maturepop_estimates <- function(model, crab_data, years, species, region,
     output <- match.arg(output, choices = all_opts, several.ok = TRUE)
   }
   
+  #------------------------------
+  # Specify missing chela years
+  #------------------------------
+  missing_chela <- data.frame(SPECIES  = c("SNOW", "SNOW", "SNOW", "SNOW",
+                                           "TANNER", "TANNER"),
+                              YEAR = c(2008, 2012, 2014, 2016,
+                                       2013, 2015))
+  
   #------------------------------------------------------------------
   # sdmTMB simulations
   #------------------------------------------------------------------
   set.seed(1)
   message("Simulating from sdmTMB model")
-  pmat.sim <- predict(model, sub1, type = "response", nsim = 300)
-  gc()
+  pmat.sim <- predict(model, sub1, type = "response", nsim = n_sim)
   
   #------------------------------------------------------------------
   # OGIVES / SAM with SF-at-size uncertainty
@@ -102,7 +130,7 @@ calc_maturepop_estimates <- function(model, crab_data, years, species, region,
         by = c("YEAR", "REGION", "DISTRICT", "SIZE_5MM")
       )
     
-    B    <- 100
+    B    <- 25
     nsim <- ncol(pmat.sim)
     
     # SAM helper
@@ -124,7 +152,7 @@ calc_maturepop_estimates <- function(model, crab_data, years, species, region,
     
     # outer loop over sdmTMB sims
     for (s in seq_len(nsim)) {
-      message(paste("SF draws (bin-total) for sdmTMB sim", s, "of", nsim))
+      message(paste("SF draws for sdmTMB sim", s, "of", nsim))
       
       pmat_s <- pmat.sim[, s]
       sub1_p <- cbind(sub1_sf, pmat = pmat_s)
@@ -200,29 +228,29 @@ calc_maturepop_estimates <- function(model, crab_data, years, species, region,
       ogives <- ogive_all %>%
         group_by(YEAR, SPECIES, REGION, DISTRICT, SIZE_5MM) %>%
         summarise(
-          PROP_MATURE_mean = mean(p_b, na.rm = TRUE),
-          VAR_total        = var(p_b,  na.rm = TRUE),
-          LOGIT_mean = {
+          PROP_MATURE = mean(p_b, na.rm = TRUE),
+          VAR_TOTAL        = var(p_b,  na.rm = TRUE),
+          PROP_MATURE_LOGIT = {
             p_clip <- pmin(pmax(p_b, 1e-6), 1 - 1e-6)
             mean(qlogis(p_clip), na.rm = TRUE)
           },
-          LOGIT_sd = {
+          PROP_MATURE_LOGIT_SD = {
             p_clip <- pmin(pmax(p_b, 1e-6), 1 - 1e-6)
             sd(qlogis(p_clip), na.rm = TRUE)
           },
           .groups = "drop"
         ) %>%
         mutate(
-          PROP_MATURE_mean = ifelse(is.nan(PROP_MATURE_mean), 0, PROP_MATURE_mean),
-          VAR_total        = replace_na(VAR_total, 0),
-          VAR_total        = pmax(VAR_total, 0),
-          PROP_MATURE_sd   = sqrt(VAR_total),
-          PROP_MATURE_mean = pmin(pmax(PROP_MATURE_mean, 0), 1),
-          hi_raw = PROP_MATURE_mean + 1.96 * PROP_MATURE_sd,
-          lo_raw = PROP_MATURE_mean - 1.96 * PROP_MATURE_sd,
-          PROP_MATURE_hi = pmin(1, hi_raw),
-          PROP_MATURE_lo = pmax(0, lo_raw),
-          PROP_MATURE_sd = (PROP_MATURE_hi - PROP_MATURE_mean) / 1.96
+          PROP_MATURE = ifelse(is.nan(PROP_MATURE), 0, PROP_MATURE),
+          VAR_TOTAL        = replace_na(VAR_TOTAL, 0),
+          VAR_TOTAL        = pmax(VAR_TOTAL, 0),
+          PROP_MATURE_SD   = sqrt(VAR_TOTAL),
+          PROP_MATURE = pmin(pmax(PROP_MATURE, 0), 1),
+          hi_raw = PROP_MATURE + 1.96 * PROP_MATURE_SD,
+          lo_raw = PROP_MATURE - 1.96 * PROP_MATURE_SD,
+          PROP_MATURE_CI_hi = pmin(1, hi_raw),
+          PROP_MATURE_CI_lo = pmax(0, lo_raw),
+          PROP_MATURE_SD = (PROP_MATURE_CI_hi - PROP_MATURE) / 1.96
         ) %>%
         left_join(
           SF_var %>%
@@ -231,10 +259,16 @@ calc_maturepop_estimates <- function(model, crab_data, years, species, region,
         ) %>%
         mutate(
           SF          = replace_na(SF_sum, 0),
-          NUM_MATURE  = SF * PROP_MATURE_mean,
+          NUM_MATURE  = SF * PROP_MATURE,
           NUM_IMMATURE= SF - NUM_MATURE,
-          TOTAL_CRAB  = SF
-        )
+          TOTAL_CRAB  = SF,
+          # Did the model interpolate missing chela years?
+          INTERPOLATED = if_else(
+            YEAR %in% missing_chela$YEAR[missing_chela$SPECIES == unique(SPECIES)],
+            "Y", "N")) %>%
+        filter(!(YEAR == 2025 & SPECIES == "SNOW" & SIZE_5MM == 172.5)) %>%# dropping likely miscoded Tanner until this is corrected in the specimen file
+        dplyr::select(YEAR, SPECIES, REGION, DISTRICT, SIZE_5MM, PROP_MATURE, PROP_MATURE_SD, 
+                      PROP_MATURE_LOGIT, PROP_MATURE_LOGIT_SD, NUM_MATURE, NUM_IMMATURE, TOTAL_CRAB, INTERPOLATED)
       
       outputs$ogives <- ogives
     }
@@ -248,25 +282,27 @@ calc_maturepop_estimates <- function(model, crab_data, years, species, region,
       SAM <- SAM_all %>%
         group_by(YEAR, SPECIES, REGION, DISTRICT) %>%
         summarise(
-          SAM_mean  = mean(SAM, na.rm = TRUE),
-          VAR_total = var(SAM,  na.rm = TRUE),
-          SAM_sd    = sqrt(VAR_total),
-          SAM_lo    = SAM_mean - 1.96 * SAM_sd,
-          SAM_hi    = SAM_mean + 1.96 * SAM_sd,
+          VAR_TOTAL = var(SAM,  na.rm = TRUE),
+          SAM_SD    = sqrt(VAR_TOTAL),
+          SAM  = mean(SAM, na.rm = TRUE),
           .groups   = "drop"
         ) %>%
-        right_join(
-          data.frame(YEAR = seq(min(.$YEAR, na.rm = TRUE),
-                                max(.$YEAR, na.rm = TRUE))),
-          by = "YEAR"
-        )
+        full_join(
+          expand.grid(YEAR = seq(min(.$YEAR, na.rm = TRUE),
+                                max(.$YEAR, na.rm = TRUE)),
+                      DISTRICT = unique(.$DISTRICT)),
+        ) %>%
+        # Did the model interpolate missing chela years?
+        mutate(INTERPOLATED = if_else(
+          YEAR %in% missing_chela$YEAR[missing_chela$SPECIES == unique(SPECIES)],
+          "Y", "N"))
       
       outputs$SAM <- SAM
     }
   } # end if(ogives/SAM)
   
   #------------------------------------------------------------------
-  # CPUE (unchanged)
+  # CPUE 
   #------------------------------------------------------------------
   if ("cpue" %in% output) {
     nsim <- ncol(pmat.sim)
@@ -278,12 +314,7 @@ calc_maturepop_estimates <- function(model, crab_data, years, species, region,
       fit.sim <- pmat.sim[, ii]
       
       crab_data$specimen <- cbind(sub1, fit.sim) %>%
-        mutate(
-          DISTRICT = case_when(
-            (species == "TANNER" & region == "EBS" & district == "ALL") ~ "ALL",
-            TRUE ~ DISTRICT
-          )
-        ) %>%
+        filter(!(SPECIES == "TANNER" & DISTRICT == "ALL")) %>% # adding this in until crabpack can handle EBS-wide for tanner
         rename(PROP_MATURE = fit.sim) %>%
         mutate(
           SAMPLING_FACTOR_MATURE   = SAMPLING_FACTOR * PROP_MATURE,
@@ -296,7 +327,7 @@ calc_maturepop_estimates <- function(model, crab_data, years, species, region,
       cpue_sim_mature <- suppressMessages(
         crabpack::calc_cpue(
           crab_data = crab_data, species = species,
-          size_min = size_min, size_max = size_max, sex = "male",
+          size_min = size_min, size_max = size_max, sex = "male", district = unique(crab_data$specimen$DISTRICT),
           bin_1mm = isTRUE(size_1mm),
           shell_condition = "new_hardshell"
         )
@@ -308,7 +339,7 @@ calc_maturepop_estimates <- function(model, crab_data, years, species, region,
       cpue_sim_immature <- suppressMessages(
         crabpack::calc_cpue(
           crab_data = crab_data, species = species,
-          size_min = size_min, size_max = size_max, sex = "male",
+          size_min = size_min, size_max = size_max, sex = "male", district = unique(crab_data$specimen$DISTRICT),
           bin_1mm = isTRUE(size_1mm),
           shell_condition = "new_hardshell"
         )
@@ -345,22 +376,53 @@ calc_maturepop_estimates <- function(model, crab_data, years, species, region,
     mature_cpue <- cpue.df2 %>%
       dplyr::select(!c(CPUE_VAR, CPUE_MT_VAR, CPUE_LBS_VAR,
                        CPUE_SD, CPUE_MT_SD, CPUE_LBS_SD,
-                       COUNT_VAR, COUNT_SD)) %>%
+                       COUNT_VAR, COUNT_SD, NSIM)) %>%
       rename(
         COUNT     = COUNT_MEAN,
         CPUE      = CPUE_MEAN,
         CPUE_MT   = CPUE_MT_MEAN,
         CPUE_LBS  = CPUE_LBS_MEAN
       ) %>%
-      mutate(Estimator = "sdmTMB") %>%
-      # (keep your NA logic here; omitted for brevity)
-      identity()
+      identity() %>%
+      full_join(
+        expand.grid(YEAR = seq(min(.$YEAR, na.rm = TRUE),
+                               max(.$YEAR, na.rm = TRUE)),
+                    DISTRICT = unique(.$DISTRICT)),
+      ) %>%
+      mutate(
+        COUNT_CI      = 1.96 * COUNT_SD,
+        CPUE_CI       = 1.96 * CPUE_SD,
+        CPUE_MT_CI    = 1.96 * CPUE_MT_SD,
+        CPUE_LBS_CI   = 1.96 * CPUE_LBS_SD,
+        
+        # ensure CI widths are non‑negative
+        COUNT_CI    = pmax(COUNT_CI,    0),
+        CPUE_CI    = pmax(CPUE_CI,    0),
+        CPUE_MT_CI   = pmax(CPUE_MT_CI ,   0),
+        CPUE_LBS_CI  = pmax(CPUE_LBS_CI,  0),
+        
+        # clamp lower bounds at 0
+        COUNT_lo    = pmax(COUNT   - COUNT_CI,   0),
+        COUNT_hi    = COUNT   + COUNT_CI,
+        
+        CPUE_lo    = pmax(CPUE   - CPUE_CI,   0),
+        CPUE_hi    = CPUE   + CPUE_CI,
+        
+        CPUE_MT_lo   = pmax(CPUE_MT  - CPUE_MT_CI,  0),
+        CPUE_MT_hi   = CPUE_MT  + CPUE_MT_CI,
+        
+        CPUE_LBS_lo  = pmax(CPUE_LBS - CPUE_LBS_CI, 0),
+        CPUE_LBS_hi  = CPUE_LBS + CPUE_LBS_CI,
+        # Did the model interpolate missing chela years?
+        INTERPOLATED = if_else(
+          YEAR %in% missing_chela$YEAR[missing_chela$SPECIES == unique(SPECIES)],
+          "Y", "N"))
     
     outputs$mature_cpue <- mature_cpue
   }
   
   #------------------------------------------------------------------
-  # BIOABUND (unchanged)
+  # BIOABUND 
   #------------------------------------------------------------------
   if ("bioabund" %in% output) {
     nsim <- ncol(pmat.sim)
@@ -372,6 +434,7 @@ calc_maturepop_estimates <- function(model, crab_data, years, species, region,
       fit.sim <- pmat.sim[, ii]
       
       crab_data$specimen <- cbind(sub1, fit.sim) %>%
+        filter(!(SPECIES == "TANNER" & DISTRICT == "ALL")) %>% # adding this in until crabpack can handle EBS-wide for tanner
         rename(PROP_MATURE = fit.sim) %>%
         mutate(
           SAMPLING_FACTOR_MATURE   = SAMPLING_FACTOR * PROP_MATURE,
@@ -435,8 +498,7 @@ calc_maturepop_estimates <- function(model, crab_data, years, species, region,
         VAR_BIOMASS_MT_between, VAR_BIOMASS_MT_within,
         VAR_BIOMASS_LBS_between, VAR_BIOMASS_LBS_within,
         ABUNDANCE_VAR, BIOMASS_MT_VAR, BIOMASS_LBS_VAR,
-        ABUNDANCE_SD, BIOMASS_MT_SD, BIOMASS_LBS_SD
-      )) %>%
+        ABUNDANCE_SD, BIOMASS_MT_SD, BIOMASS_LBS_SD, NSIM)) %>%
       rename(
         ABUNDANCE   = ABUNDANCE_MEAN,
         BIOMASS_MT  = BIOMASS_MT_MEAN,
@@ -450,12 +512,33 @@ calc_maturepop_estimates <- function(model, crab_data, years, species, region,
         ),
         by = c("YEAR", "CATEGORY")
       ) %>%
+      filter(ABUNDANCE > 0) %>% # crabpack codes missing chela years as zero, filtering them here so they are assigned NA in next step
+      full_join(
+        expand.grid(YEAR = seq(min(.$YEAR, na.rm = TRUE),
+                               max(.$YEAR, na.rm = TRUE)),
+                    DISTRICT = unique(.$DISTRICT),
+                    CATEGORY = unique(.$CATEGORY)),
+      ) %>%
       mutate(
-        Estimator    = "sdmTMB",
-        ABUNDANCE    = ABUNDANCE / 1e6,
-        ABUNDANCE_CI = ABUNDANCE_CI / 1e6
-      )
-    
+        # ensure CI widths are non‑negative
+        ABUNDANCE_CI    = pmax(ABUNDANCE_CI,    0),
+        BIOMASS_MT_CI   = pmax(BIOMASS_MT_CI,   0),
+        BIOMASS_LBS_CI  = pmax(BIOMASS_LBS_CI,  0),
+        
+        # clamp lower bounds at 0
+        ABUNDANCE_lo    = pmax(ABUNDANCE   - ABUNDANCE_CI,   0),
+        ABUNDANCE_hi    = ABUNDANCE   + ABUNDANCE_CI,
+        
+        BIOMASS_MT_lo   = pmax(BIOMASS_MT  - BIOMASS_MT_CI,  0),
+        BIOMASS_MT_hi   = BIOMASS_MT  + BIOMASS_MT_CI,
+        
+        BIOMASS_LBS_lo  = pmax(BIOMASS_LBS - BIOMASS_LBS_CI, 0),
+        BIOMASS_LBS_hi  = BIOMASS_LBS + BIOMASS_LBS_CI,
+        # Did the model interpolate missing chela years?
+        INTERPOLATED = if_else(
+            YEAR %in% missing_chela$YEAR[missing_chela$SPECIES == unique(SPECIES)],
+            "Y", "N"))
+
     outputs$mature_bioabund <- mature_bioabund
   }
   

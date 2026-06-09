@@ -35,4 +35,8 @@ tanner.mod <- sdmTMB(
   silent = FALSE
 )
 
+# Make sure it passes sanity check
+sanity(tanner.mod)
+
+# Save
 saveRDS(tanner.mod, "./Models/tanner_maturity_sdmTMB.rda")

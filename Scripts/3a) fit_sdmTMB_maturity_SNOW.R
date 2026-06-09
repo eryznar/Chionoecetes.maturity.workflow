@@ -35,5 +35,9 @@ snow.mod <- sdmTMB(
   silent = FALSE
 )
 
+# Make sure it passes sanity check
+sanity(snow.mod)
+
+# Save
 saveRDS(snow.mod, "./Models/snow_maturity_sdmTMB.rda")
 
