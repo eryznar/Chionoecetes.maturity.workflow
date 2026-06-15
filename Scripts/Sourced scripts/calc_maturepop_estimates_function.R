@@ -376,7 +376,8 @@ calc_maturepop_estimates <- function(model, crab_data, years, species, region,
     mature_cpue <- cpue.df2 %>%
       dplyr::select(!c(CPUE_VAR, CPUE_MT_VAR, CPUE_LBS_VAR,
                        CPUE_SD, CPUE_MT_SD, CPUE_LBS_SD,
-                       COUNT_VAR, COUNT_SD, NSIM)) %>%
+                       COUNT_VAR, COUNT_SD, NSIM,
+                       CPUE_CI, COUNT_CI, CPUE_MT_CI, CPUE_LBS_CI)) %>%
       rename(
         COUNT     = COUNT_MEAN,
         CPUE      = CPUE_MEAN,
@@ -390,29 +391,29 @@ calc_maturepop_estimates <- function(model, crab_data, years, species, region,
                     DISTRICT = unique(.$DISTRICT)),
       ) %>%
       mutate(
-        COUNT_CI      = 1.96 * COUNT_SD,
-        CPUE_CI       = 1.96 * CPUE_SD,
-        CPUE_MT_CI    = 1.96 * CPUE_MT_SD,
-        CPUE_LBS_CI   = 1.96 * CPUE_LBS_SD,
+        #COUNT_CI      = 1.96 * COUNT_SD,
+        # CPUE_CI       = 1.96 * CPUE_SD,
+        # CPUE_MT_CI    = 1.96 * CPUE_MT_SD,
+        # CPUE_LBS_CI   = 1.96 * CPUE_LBS_SD,
         
         # ensure CI widths are non‑negative
-        COUNT_CI    = pmax(COUNT_CI,    0),
-        CPUE_CI    = pmax(CPUE_CI,    0),
-        CPUE_MT_CI   = pmax(CPUE_MT_CI ,   0),
-        CPUE_LBS_CI  = pmax(CPUE_LBS_CI,  0),
+        #COUNT_CI    = pmax(COUNT_CI,    0),
+        # CPUE_CI    = pmax(CPUE_CI,    0),
+        # CPUE_MT_CI   = pmax(CPUE_MT_CI ,   0),
+        # CPUE_LBS_CI  = pmax(CPUE_LBS_CI,  0),
         
         # clamp lower bounds at 0
-        COUNT_lo    = pmax(COUNT   - COUNT_CI,   0),
-        COUNT_hi    = COUNT   + COUNT_CI,
+        # COUNT_lo    = pmax(COUNT   - COUNT_CI,   0),
+        # COUNT_hi    = COUNT   + COUNT_CI,
+        # 
+        # CPUE_lo    = pmax(CPUE   - CPUE_CI,   0),
+        # CPUE_hi    = CPUE   + CPUE_CI,
         
-        CPUE_lo    = pmax(CPUE   - CPUE_CI,   0),
-        CPUE_hi    = CPUE   + CPUE_CI,
-        
-        CPUE_MT_lo   = pmax(CPUE_MT  - CPUE_MT_CI,  0),
-        CPUE_MT_hi   = CPUE_MT  + CPUE_MT_CI,
-        
-        CPUE_LBS_lo  = pmax(CPUE_LBS - CPUE_LBS_CI, 0),
-        CPUE_LBS_hi  = CPUE_LBS + CPUE_LBS_CI,
+        # CPUE_MT_lo   = pmax(CPUE_MT  - CPUE_MT_CI,  0),
+        # CPUE_MT_hi   = CPUE_MT  + CPUE_MT_CI,
+        # 
+        # CPUE_LBS_lo  = pmax(CPUE_LBS - CPUE_LBS_CI, 0),
+        # CPUE_LBS_hi  = CPUE_LBS + CPUE_LBS_CI,
         # Did the model interpolate missing chela years?
         INTERPOLATED = if_else(
           YEAR %in% missing_chela$YEAR[missing_chela$SPECIES == unique(SPECIES)],
