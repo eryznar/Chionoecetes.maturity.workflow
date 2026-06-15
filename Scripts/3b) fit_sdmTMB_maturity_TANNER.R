@@ -18,7 +18,7 @@ tanner.chela <-  read.csv("./Data/chionoecetes_chela_withcutlines.csv") %>% #alr
 mat.msh <- sdmTMB::make_mesh(tanner.chela, c("LONGITUDE","LATITUDE"), n_knots = 200, type = "kmeans")
 
 # Specify extra time
-xtra.time <- c(2013, 2015, 2020) # missing years across all size bins
+xtra.time <- c(2013, 2015, 2020) # missing years with no chela data
 
 # Fit model (model parameters have already been vetted as the "best")
 tanner.mod <- sdmTMB(
