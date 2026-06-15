@@ -24,9 +24,9 @@ snow_out <- calc_maturepop_estimates(model = snow_mod,
                                      size_1mm = NULL, 
                                      size_min = NULL, 
                                      size_max = NULL, 
-                                     fill_missing_years = TRUE, 
-                                     output = c("ogives", "SAM", "bioabund"),
-                                     n_sim = 5) 
+                                     fill_missing_years = TRUE, # fills with model estimates for missing chela years
+                                     output = c("cpue"),
+                                     n_sim = 1) # how many simulation draws for the sdmTMB model?
     
 # Plot ogives
 ggplot(snow_out$ogives, aes(SIZE_5MM, PROP_MATURE, color = DISTRICT))+
@@ -80,7 +80,7 @@ tanner_out <- calc_maturepop_estimates(model = tanner_mod,
                                        size_min = NULL, 
                                        size_max = NULL, 
                                        fill_missing_years = TRUE, 
-                                       output = c("ogives"),
+                                       output = c("ogives", "SAM", "CPUE", "bioabund"),
                                        n_sim = 5) 
 # Plot ogives
 ggplot(tanner_out$ogives, aes(SIZE_5MM, PROP_MATURE, color = DISTRICT))+
