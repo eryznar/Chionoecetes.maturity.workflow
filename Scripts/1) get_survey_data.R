@@ -9,7 +9,7 @@
 source("./Scripts/Sourced scripts/load_libs_params.R")
 
 # Set channel
-channel <- "API"
+channel <- "KOD" # this needs to be set to KOD to get survey data by processing deadline
 
 # Set current year
 current_yr <- 2025

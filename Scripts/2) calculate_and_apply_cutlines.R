@@ -3,6 +3,18 @@
 
 # Author: Emily Ryznar, Jon Richar, Shannon Hennessey
 
+# Notes:
+# - Workflow: 1) Bin carapace widths in log space; 2) calculate minima between bimodal chela height (log space) density distribution by CW bin;
+#             3) fit linear cutline model of ln chela height minima ~ ln carapace width midpoint; 
+#             4) apply cutline model to chela crab to assign mature/immature
+
+# - Visually inspect density plots to make sure minima is being calculated correctly. The vertical, dashed blue line
+#   should roughly fall in between the two density peaks by CW bin. If it looks like a minimum was not calculated correctly,
+#   try changing the bandwidth in the density function ("bw = ..."; lines 66 and 70) and/or the buffer that is added to 
+#   aid identification of the minimum around between maxima (lines 100 and 104).
+# - Visually inspect the linear fit of the cutline model to the minima ~ carapace width midpoint data (see cutline_lm_plot).
+#   Points far off the linear fit suggest a minimum was not calculated correctly. 
+
 # LOAD LIBS/PARAMS/DATA ----
 source("./Scripts/Sourced scripts/load_libs_params.R")
 
@@ -51,11 +63,11 @@ for(s in 1:length(species)){
     
     # Calculate density for chela heights within that bin
     if(species[s] == "TANNER"){
-      d <- density(opt.dat$LN_CH, kernel = "gaussian")
+      d <- density(opt.dat$LN_CH, kernel = "gaussian") # no bandwidth specified, but can add bw=... if needed
     }
     
     if(species[s] == "SNOW"){
-      d <- density(opt.dat$LN_CH, kernel = "gaussian", bw = 0.04)
+      d <- density(opt.dat$LN_CH, kernel = "gaussian", bw = 0.04) # can change bandwidth here
     }
     
     
@@ -85,11 +97,11 @@ for(s in 1:length(species)){
     
     # Add buffer to identifying minimum around maxima
     if(species[s] == "TANNER"){
-      ints[2] <- ints[1] + 0.3
+      ints[2] <- ints[1] + 0.3 # can change buffer here to aid minima calc
     }
     
     if(species[s] == "SNOW"){
-      ints[2] <- ints[1] + 0.2
+      ints[2] <- ints[1] + 0.2 # can change buffer here to aid minima calc
     }
     
     
@@ -110,7 +122,7 @@ for(s in 1:length(species)){
 } # end species loop
 
 
-# PLOT DENSITY PLOTS WITH CUTLINE ----
+# PLOT DENSITY PLOTS WITH MINIMA ----
 plot.dat <- right_join(bin.dat %>% dplyr::select(-UPPER, -LOWER), 
                        min.dat)
 
@@ -206,11 +218,4 @@ chela_db_cutlines <- min.dat %>%
 
 # Overwrite cheladatabase csv with new MATURE column added based on cutline (and UTM coords)
 write.csv(chela_db_cutlines, "./Data/chionoecetes_chela_withcutlines.csv")
-
-
-
-# SAVE CUTLINE MINIMA FOR DOWNSTREAM USE ----
-min.dat %>%
-  dplyr::select(SPECIES, BIN, LOWER, UPPER, MIDPOINT, MINIMUM) %>%
-  write.csv("./Output/chela_cutline_minima.csv", row.names = FALSE) 
 
