@@ -124,9 +124,9 @@ plot.resids <- function(model, species){
 snow_mod <- readRDS("./Models/snow_maturity_sdmTMB.rda")
 
 # Run function
-plot.resids(snow_mod, "Snow") -> snow.dharma # I get an error when I try to save these plots inside the function
+plot.resids(snow_mod, "Snow") -> snow.dharma 
 
-# Check residuuals
+# Check residuals
 snow.dharma$by_yr # do residuals follow 1-1 line by year?
 snow.dharma$by_size # do residuals follow 1-1 line by size?
 
