@@ -18,7 +18,7 @@ snow.chela <-  read.csv("./Data/chionoecetes_chela_withcutlines.csv") %>% #alrea
 mat.msh <- sdmTMB::make_mesh(snow.chela, c("LONGITUDE","LATITUDE"), n_knots = 300, type = "kmeans")
 
 # Specify xtra time
-xtra.time <- c(2008, 2012, 2014, 2016, 2020) # missing years across all size bins
+xtra.time <- c(2008, 2012, 2014, 2016, 2020) # missing years with no chela data
 
 # Fit model (model parameters have already been vetted as the "best")
 snow.mod <- sdmTMB(
@@ -34,6 +34,8 @@ snow.mod <- sdmTMB(
   data = snow.chela,
   silent = FALSE
 )
+
+snow.mod <- readRDS("./Models/snow_maturity_sdmTMB.rda")
 
 # Make sure it passes sanity check
 sanity(snow.mod)
