@@ -3,10 +3,10 @@
 
 # Author: Emily Ryznar, Jon Richar, Shannon Hennessey
 
-# 1) LOAD LIBS/PARAMS/DATA ----
+# LOAD LIBS/PARAMS/DATA ----
 source("./Scripts/Sourced scripts/load_libs_params.R")
 
-# 2) LOAD AND BIN CHELA DATA ----
+# LOAD AND BIN CHELA DATA ----
 chela_db <- read.csv("./Data/chionoecetes_chela.csv") 
 
 bin.dat <- chela_db %>%
@@ -18,7 +18,7 @@ bin.dat <- chela_db %>%
                      MIDPOINT = (UPPER + LOWER)/2)
 
 
-# 3) CALCULATE MINIMA ----
+# CALCULATE MINIMA ----
 # Sequentially apply KDE to the ln-chela height data for each interval, and identify minima of the resulting
 # density distributions to define maturity classes in a given interval, looping over species
 
@@ -110,7 +110,7 @@ for(s in 1:length(species)){
 } # end species loop
 
 
-# 3) PLOT DENSITY PLOTS WITH CUTLINE ----
+# PLOT DENSITY PLOTS WITH CUTLINE ----
 plot.dat <- right_join(bin.dat %>% dplyr::select(-UPPER, -LOWER), 
                        min.dat)
 
@@ -146,7 +146,7 @@ ggplot() +
 ggsave("./Figures/tanner_density_plots.png", width = 20, height = 20)
 
 
-# 4) FIT LINEAR CUTLINE MODEL AND PLOT ----
+# FIT LINEAR CUTLINE MODELS BY SPECIES AND PLOT ----
 # Fit linear model to evaluate ln(CH) minima (imm/mat division) and ln(CW) bin midpoint
 for(s in 1:length(species)){
   mod <- lm(MINIMUM ~ MIDPOINT, min.dat %>% filter(SPECIES == species[s]))
@@ -174,7 +174,7 @@ for(s in 1:length(species)){
 }
 
 
-# Pull out cutline parameters by species
+# ADD CUTLINE PARAMETERS TO CHELA DATABASE AND SAVE ----
 chela_db_cutlines <- min.dat %>%
                     group_by(SPECIES) %>%
                     mutate(BETA0 = coef(lm(MINIMUM ~ MIDPOINT))[1],
